@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CRM Pro</title>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <nav class="nav">
+                <div class="nav-brand">
+                    <a href="../index.html" style="text-decoration: none; color: inherit;">
+                        <h1>📊 CRM Pro</h1>
+                    </a>
+                </div>
+                <div class="nav-menu">
+                    <button class="theme-toggle" id="themeToggle">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <a href="register.html" class="btn btn-secondary">Sign Up</a>
+                </div>
+            </nav>
+        </header>
+
+        <main class="main">
+            <div class="form-container">
+                <h1 class="form-title">Welcome Back</h1>
+                <p class="text-center mb-4" style="color: var(--text-secondary);">
+                    Sign in to your account to continue
+                </p>
+                
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter your email"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter your password"
+                        >
+                    </div>
+                    
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                        <label for="rememberMe">Remember me for 30 days</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary form-submit">
+                        <span id="submitText">Sign In</span>
+                        <span id="loadingText" class="hidden">Signing in...</span>
+                    </button>
+                </form>
+                
+                <div class="form-link">
+                    <p>Don't have an account? <a href="register.html">Sign up here</a></p>
+                </div>
+                
+                <div class="form-link">
+                    <p><a href="../index.html">← Back to home</a></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        // Login form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
+            const submitText = document.getElementById('submitText');
+            const loadingText = document.getElementById('loadingText');
+            
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Show loading state
+                submitText.classList.add('hidden');
+                loadingText.classList.remove('hidden');
+                
+                const formData = new FormData(loginForm);
+                const email = formData.get('email');
+                const password = formData.get('password');
+                const rememberMe = formData.get('rememberMe') === 'on';
+                
+                try {
+                    const response = await fetch('http://localhost:3000/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            email,
+                            password,
+                            rememberMe
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Show success message
+                        if (window.crmApp) {
+                            window.crmApp.showNotification('Login successful! Redirecting...', 'success');
+                        }
+                        
+                        // Redirect to dashboard
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                    } else {
+                        throw new Error(data.error || 'Login failed');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    
+                    // Show error message
+                    if (window.crmApp) {
+                        window.crmApp.showNotification(error.message || 'Login failed. Please try again.', 'error');
+                    }
+                    
+                    // Reset form
+                    loginForm.reset();
+                } finally {
+                    // Hide loading state
+                    submitText.classList.remove('hidden');
+                    loadingText.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
