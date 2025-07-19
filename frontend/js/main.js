@@ -1,7 +1,7 @@
 // Main JavaScript file
 class CRMApp {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:3000/api';
+        this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
         this.currentUser = null;
         this.init();
     }
