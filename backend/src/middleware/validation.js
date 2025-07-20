@@ -48,13 +48,15 @@ const validateLogin = [
 
 const validateLead = [
     body('name')
+        .optional()
         .trim()
         .isLength({ min: 1, max: 255 })
-        .withMessage('Name is required and must be less than 255 characters'),
+        .withMessage('Name must be less than 255 characters'),
     body('phone_number')
+        .optional()
         .trim()
         .isLength({ min: 1, max: 255 })
-        .withMessage('Phone number is required and must be less than 255 characters'),
+        .withMessage('Phone number must be less than 255 characters'),
     body('campaign_id')
         .optional()
         .isUUID()

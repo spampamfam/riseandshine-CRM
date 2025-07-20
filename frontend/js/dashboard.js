@@ -455,38 +455,18 @@ class Dashboard {
         const formData = new FormData(e.target);
         const leadId = formData.get('leadId');
         
-        // Validate required fields
-        const requiredFields = [
-            'name', 'phoneNumber', 'campaign', 'listed', 'ap', 'mv', 'bedrooms', 
-            'bathrooms', 'condition', 'occupancy', 'repairsNeeded', 
-            'reason', 'closing', 'address', 'additionalInfo'
-        ];
-        
-        let hasErrors = false;
-        requiredFields.forEach(field => {
-            const value = formData.get(field);
-            if (!value || value.trim() === '') {
-                this.highlightError(field);
-                hasErrors = true;
-            }
-        });
-        
-        if (hasErrors) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-        
+        // No validation required since all fields are optional
         const leadData = {
             name: formData.get('name'),
             phone_number: formData.get('phoneNumber'),
             campaign_id: formData.get('campaign'),
             listed: formData.get('listed'),
-            ap: parseFloat(formData.get('ap')),
-            mv: parseFloat(formData.get('mv')),
+            ap: parseFloat(formData.get('ap')) || null,
+            mv: parseFloat(formData.get('mv')) || null,
             repairs_needed: formData.get('repairsNeeded'),
-            bedrooms: parseInt(formData.get('bedrooms')),
-            bathrooms: parseFloat(formData.get('bathrooms')),
-            condition_rating: parseInt(formData.get('condition')),
+            bedrooms: parseInt(formData.get('bedrooms')) || null,
+            bathrooms: parseFloat(formData.get('bathrooms')) || null,
+            condition_rating: parseInt(formData.get('condition')) || null,
             occupancy: formData.get('occupancy'),
             reason: formData.get('reason'),
             closing: formData.get('closing'),
