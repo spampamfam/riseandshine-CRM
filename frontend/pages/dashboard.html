@@ -92,7 +92,8 @@
                     <button class="theme-toggle" id="themeToggle">
                         <span class="theme-icon">🌙</span>
                     </button>
-                    <span id="userEmail" style="color: var(--text-secondary); margin-right: 1rem;"></span>
+                    <span id="userEmail" style="color: var(--text-secondary); margin-right: 1rem; cursor: pointer; text-decoration: underline;" onclick="dashboard.showProfileModal()"></span>
+                    <a href="admin.html" class="btn btn-primary admin-only" style="margin-right: 1rem; display: none;">Admin Panel</a>
                     <button id="logoutBtn" class="btn btn-secondary">Logout</button>
                 </div>
             </nav>
@@ -104,7 +105,7 @@
                     <h1 class="dashboard-title">My Dashboard</h1>
                     <div class="dashboard-actions">
                         <button id="addLeadBtn" class="btn btn-primary">+ Add Lead</button>
-                        <button id="exportBtn" class="btn btn-outline">Export CSV</button>
+                        <button id="exportBtn" class="btn btn-outline admin-only" style="display: none;">Export CSV</button>
                     </div>
                 </div>
 
@@ -112,12 +113,9 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="totalQualifiedThisMonth">0</div>
-                        <div class="stat-label">Total Qualified This Month</div>
+                        <div class="stat-label">Total Qualified Leads This Month</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="leadsToday">0</div>
-                        <div class="stat-label">Leads Today</div>
-                    </div>
+
                     <div class="stat-card">
                         <div class="stat-number" id="qualifiedLeads">0</div>
                         <div class="stat-label">Qualified</div>
@@ -139,7 +137,7 @@
                 <!-- Dashboard Tabs -->
                 <div class="dashboard-tabs" style="margin-bottom: 2rem;">
                     <button class="tab-button active" data-tab="leads">My Leads</button>
-                    <button class="tab-button" data-tab="duplicates">Duplicates</button>
+                    <button class="tab-button" data-tab="leaderboard">Leaderboard</button>
                 </div>
 
                 <!-- Leads Tab -->
@@ -163,6 +161,7 @@
                                     <option value="disqualified">Disqualified</option>
                                     <option value="callback">Callback</option>
                                     <option value="inventory">Inventory</option>
+                                    <option value="duplicate">Duplicate</option>
                                     <option value="converted">Converted</option>
                                 </select>
                             </div>
@@ -194,43 +193,38 @@
                 </div>
             </div>
 
-            <!-- Duplicates Tab -->
-            <div id="duplicatesTab" class="tab-content">
+            <!-- Leaderboard Tab -->
+            <div id="leaderboardTab" class="tab-content">
                 <div class="leads-table">
                     <div class="table-header">
-                        <h2 class="table-title">Duplicate Phone Numbers</h2>
+                        <h2 class="table-title">User Leaderboard</h2>
                         <div class="table-actions">
-                            <input 
-                                type="text" 
-                                id="duplicateSearchInput" 
-                                placeholder="Search duplicates..." 
-                                class="form-input"
-                                style="width: 200px; margin-right: 1rem;"
-                            >
+                            <select id="leaderboardPeriod" class="form-input" style="width: 150px; margin-right: 1rem;">
+                                <option value="current_month">Current Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="all_time">All Time</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- Duplicates Table -->
+                    <!-- Leaderboard Table -->
                     <div class="table-container">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Phone Number</th>
-                                    <th>Count</th>
-                                    <th>Names</th>
-                                    <th>Created Dates</th>
-                                    <th>Actions</th>
+                                    <th>Rank</th>
+                                    <th>User</th>
+                                    <th>Qualified Leads</th>
+                                    <th>Disqualified Leads</th>
+                                    <th>Duplicates</th>
+                                    <th>Callbacks</th>
+                                    <th>Total Leads</th>
                                 </tr>
                             </thead>
-                            <tbody id="duplicatesTableBody">
-                                <!-- Duplicates will be populated here -->
+                            <tbody id="leaderboardTableBody">
+                                <!-- Leaderboard will be populated here -->
                             </tbody>
                         </table>
-                    </div>
-
-                    <!-- Duplicates Pagination -->
-                    <div class="pagination" id="duplicatesPagination" style="padding: 1rem; text-align: center;">
-                        <!-- Pagination will be populated here -->
                     </div>
                 </div>
             </div>
@@ -375,28 +369,26 @@
                     </div>
                 </div>
 
-                <!-- Status -->
-                <div class="form-section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Lead Status</h3>
-                    <div class="form-group">
-                        <label for="leadStatus" class="form-label">Status</label>
-                        <select id="leadStatus" name="status" class="form-input">
-                            <option value="new">New</option>
-                            <option value="contacted">Contacted</option>
-                            <option value="qualified">Qualified</option>
-                            <option value="disqualified">Disqualified</option>
-                            <option value="callback">Callback</option>
-                            <option value="inventory">Inventory</option>
-                            <option value="converted">Converted</option>
-                        </select>
-                    </div>
-                </div>
+
 
                 <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
                     <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Lead</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Profile Information</h2>
+                <button class="modal-close" id="closeProfileModal">&times;</button>
+            </div>
+            <div id="profileContent">
+                <!-- Profile content will be loaded here -->
+            </div>
         </div>
     </div>
 
@@ -415,9 +407,21 @@
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Profile Information</h2>
+                <button class="modal-close" id="closeProfileModal">&times;</button>
+            </div>
+            <div id="profileContent">
+                <!-- Profile content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <script src="../js/theme.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/dashboard.js"></script>
 </body>
-</html> 
-</html> 
+</html>

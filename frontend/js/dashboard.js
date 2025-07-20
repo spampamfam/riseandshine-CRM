@@ -95,12 +95,12 @@ class Dashboard {
             });
         }
 
-        // Duplicate search
-        const duplicateSearchInput = document.getElementById('duplicateSearchInput');
-        if (duplicateSearchInput) {
-            duplicateSearchInput.addEventListener('input', this.debounce(() => {
-                this.loadDuplicates();
-            }, 300));
+        // Leaderboard period filter
+        const leaderboardPeriod = document.getElementById('leaderboardPeriod');
+        if (leaderboardPeriod) {
+            leaderboardPeriod.addEventListener('change', () => {
+                this.loadLeaderboard();
+            });
         }
 
         // Modal events
@@ -110,11 +110,13 @@ class Dashboard {
     setupModalEvents() {
         const leadModal = document.getElementById('leadModal');
         const deleteModal = document.getElementById('deleteModal');
+        const profileModal = document.getElementById('profileModal');
         const leadForm = document.getElementById('leadForm');
 
         // Close modal buttons
         document.getElementById('closeModal')?.addEventListener('click', () => this.closeLeadModal());
         document.getElementById('closeDeleteModal')?.addEventListener('click', () => this.closeDeleteModal());
+        document.getElementById('closeProfileModal')?.addEventListener('click', () => this.closeProfileModal());
         document.getElementById('cancelModal')?.addEventListener('click', () => this.closeLeadModal());
         document.getElementById('cancelDelete')?.addEventListener('click', () => this.closeDeleteModal());
 
@@ -123,13 +125,21 @@ class Dashboard {
             leadForm.addEventListener('submit', (e) => this.handleLeadSubmit(e));
         }
 
-        // Modal backdrop clicks
+        // Modal backdrop clicks - prevent closing when clicking inside modal
         leadModal?.addEventListener('click', (e) => {
-            if (e.target === leadModal) this.closeLeadModal();
+            if (e.target === leadModal) {
+                // Don't close modal, just prevent form clearing
+                e.preventDefault();
+                e.stopPropagation();
+            }
         });
 
         deleteModal?.addEventListener('click', (e) => {
             if (e.target === deleteModal) this.closeDeleteModal();
+        });
+
+        profileModal?.addEventListener('click', (e) => {
+            if (e.target === profileModal) this.closeProfileModal();
         });
     }
 
@@ -151,7 +161,6 @@ class Dashboard {
 
     updateStatsDisplay() {
         document.getElementById('totalQualifiedThisMonth').textContent = this.stats.total_qualified_this_month || 0;
-        document.getElementById('leadsToday').textContent = this.stats.leads_today || 0;
         document.getElementById('qualifiedLeads').textContent = this.stats.qualified || 0;
         document.getElementById('disqualifiedLeads').textContent = this.stats.disqualified || 0;
         document.getElementById('callbackLeads').textContent = this.stats.callback || 0;
@@ -174,8 +183,8 @@ class Dashboard {
         // Load content based on tab
         if (tabName === 'leads') {
             this.loadLeads();
-        } else if (tabName === 'duplicates') {
-            this.loadDuplicates();
+        } else if (tabName === 'leaderboard') {
+            this.loadLeaderboard();
         }
     }
 
@@ -203,27 +212,22 @@ class Dashboard {
         }
     }
 
-    async loadDuplicates() {
+    async loadLeaderboard() {
         try {
-            const searchTerm = document.getElementById('duplicateSearchInput')?.value || '';
-            const params = new URLSearchParams({
-                page: this.currentPage,
-                limit: this.itemsPerPage,
-                search: searchTerm
-            });
+            const period = document.getElementById('leaderboardPeriod')?.value || 'current_month';
+            const params = new URLSearchParams({ period });
 
-            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads/duplicates?${params}`, {
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads/leaderboard?${params}`, {
                 credentials: 'include'
             });
             
             if (response.ok) {
                 const data = await response.json();
-                this.renderDuplicatesTable(data.duplicates);
-                this.renderDuplicatesPagination(data.pagination);
+                this.renderLeaderboardTable(data.leaderboard);
             }
         } catch (error) {
-            console.error('Failed to load duplicates:', error);
-            this.showNotification('Failed to load duplicates', 'error');
+            console.error('Failed to load leaderboard:', error);
+            this.showNotification('Failed to load leaderboard', 'error');
         }
     }
 
@@ -256,6 +260,43 @@ class Dashboard {
                     <button onclick="dashboard.editLead('${lead.id}')" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 0.5rem;">Edit</button>
                     <button onclick="dashboard.deleteLead('${lead.id}')" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
                 </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    renderLeaderboardTable(leaderboard) {
+        const tbody = document.getElementById('leaderboardTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (!leaderboard || leaderboard.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        No leaderboard data available.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        leaderboard.forEach((user, index) => {
+            const row = document.createElement('tr');
+            const rank = index + 1;
+            const rankClass = rank <= 3 ? `rank-${rank}` : '';
+            
+            row.innerHTML = `
+                <td class="${rankClass}">
+                    ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
+                </td>
+                <td>${this.escapeHtml(user.email)}</td>
+                <td>${user.qualified_leads || 0}</td>
+                <td>${user.disqualified_leads || 0}</td>
+                <td>${user.duplicate_leads || 0}</td>
+                <td>${user.callback_leads || 0}</td>
+                <td>${user.total_leads || 0}</td>
             `;
             tbody.appendChild(row);
         });
@@ -401,30 +442,16 @@ class Dashboard {
             campaign_id: formData.get('campaign') || null,
             ap: formData.get('ap') ? parseFloat(formData.get('ap')) : null,
             mv: formData.get('mv') ? parseFloat(formData.get('mv')) : null,
-            repairs_needed: formData.get('repairsNeeded'),
+            repairs_needed: formData.get('repairsNeeded') || null,
             bedrooms: formData.get('bedrooms') ? parseInt(formData.get('bedrooms')) : null,
             bathrooms: formData.get('bathrooms') ? parseFloat(formData.get('bathrooms')) : null,
             condition_rating: formData.get('condition') ? parseInt(formData.get('condition')) : null,
-            occupancy: formData.get('occupancy'),
-            reason: formData.get('reason'),
-            closing: formData.get('closing'),
+            occupancy: formData.get('occupancy') || null,
+            reason: formData.get('reason') || null,
+            closing: formData.get('closing') || null,
             address: formData.get('address'),
-            additional_info: formData.get('additionalInfo'),
-            status: formData.get('status')
+            additional_info: formData.get('additionalInfo') || null
         };
-
-        // Check for duplicates before submitting (only for new leads)
-        if (!leadId) {
-            const duplicateCheck = await this.checkForDuplicates(leadData.phone_number);
-            if (duplicateCheck.isDuplicate) {
-                const shouldContinue = confirm(
-                    `This phone number already exists in ${duplicateCheck.duplicates.length} lead(s). Do you want to continue anyway?`
-                );
-                if (!shouldContinue) {
-                    return;
-                }
-            }
-        }
 
         try {
             const url = leadId 
@@ -442,16 +469,23 @@ class Dashboard {
                 body: JSON.stringify(leadData)
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                this.showNotification(
-                    leadId ? 'Lead updated successfully!' : 'Lead created successfully!',
-                    'success'
-                );
+                let message = leadId ? 'Lead updated successfully!' : 'Lead created successfully!';
+                
+                // Show duplicate notification if applicable
+                if (!leadId && data.isDuplicate) {
+                    message = `Lead created but marked as duplicate (${data.duplicateCount} existing leads with same phone number)`;
+                    this.showNotification(message, 'warning');
+                } else {
+                    this.showNotification(message, 'success');
+                }
+                
                 this.closeLeadModal();
                 await this.loadStats();
                 await this.loadLeads();
             } else {
-                const data = await response.json();
                 throw new Error(data.error || 'Failed to save lead');
             }
         } catch (error) {
@@ -499,6 +533,40 @@ class Dashboard {
         const modal = document.getElementById('deleteModal');
         modal.classList.add('hidden');
         this.leadToDelete = null;
+    }
+
+    showProfileModal() {
+        const modal = document.getElementById('profileModal');
+        const content = document.getElementById('profileContent');
+        
+        if (this.currentUser) {
+            content.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">User Information</h3>
+                    <p><strong>Email:</strong> ${this.currentUser.email}</p>
+                    <p><strong>User ID:</strong> ${this.currentUser.id}</p>
+                    <p><strong>Admin Status:</strong> ${this.currentUser.isAdmin ? 'Yes' : 'No'}</p>
+                    <p><strong>Created:</strong> ${this.formatDate(this.currentUser.created_at)}</p>
+                </div>
+                ${this.currentUser.isAdmin ? `
+                <div class="form-actions" style="display: flex; gap: 1rem;">
+                    <button onclick="dashboard.editProfile()" class="btn btn-primary">Edit Profile</button>
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    closeProfileModal() {
+        const modal = document.getElementById('profileModal');
+        modal.classList.add('hidden');
+    }
+
+    editProfile() {
+        // For now, just show a message. Can be expanded later
+        this.showNotification('Profile editing feature coming soon!', 'info');
     }
 
     async confirmDelete() {

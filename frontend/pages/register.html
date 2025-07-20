@@ -34,7 +34,31 @@
                 
                 <form id="registerForm" class="register-form">
                     <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
+                        <label for="name" class="form-label">Name *</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter your full name"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nationalId" class="form-label">National ID *</label>
+                        <input 
+                            type="text" 
+                            id="nationalId" 
+                            name="nationalId" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter your national ID"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address *</label>
                         <input 
                             type="email" 
                             id="email" 
@@ -46,7 +70,19 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="phoneNumber" class="form-label">Phone Number *</label>
+                        <input 
+                            type="tel" 
+                            id="phoneNumber" 
+                            name="phoneNumber" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter your phone number"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password *</label>
                         <input 
                             type="password" 
                             id="password" 
@@ -59,7 +95,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <label for="confirmPassword" class="form-label">Confirm Password *</label>
                         <input 
                             type="password" 
                             id="confirmPassword" 
@@ -68,11 +104,6 @@
                             required 
                             placeholder="Confirm your password"
                         >
-                    </div>
-                    
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
-                        <label for="agreeTerms">I agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a></label>
                     </div>
                     
                     <button type="submit" class="btn btn-primary form-submit">
@@ -129,7 +160,10 @@
                 loadingText.classList.remove('hidden');
                 
                 const formData = new FormData(registerForm);
+                const name = formData.get('name');
+                const nationalId = formData.get('nationalId');
                 const email = formData.get('email');
+                const phoneNumber = formData.get('phoneNumber');
                 const password = formData.get('password');
                 
                 try {
@@ -140,7 +174,10 @@
                         },
                         credentials: 'include',
                         body: JSON.stringify({
+                            name,
+                            nationalId,
                             email,
+                            phoneNumber,
                             password
                         })
                     });

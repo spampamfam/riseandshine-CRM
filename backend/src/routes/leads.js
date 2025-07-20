@@ -45,6 +45,33 @@ router.post('/check-duplicate', async (req, res) => {
     }
 });
 
+// Get leaderboard
+router.get('/leaderboard', async (req, res) => {
+    try {
+        const { period = 'current_month' } = req.query;
+        
+        let dateFilter = '';
+        if (period === 'current_month') {
+            dateFilter = "created_at >= date_trunc('month', now())";
+        } else if (period === 'last_month') {
+            dateFilter = "created_at >= date_trunc('month', now() - interval '1 month') AND created_at < date_trunc('month', now())";
+        }
+
+        const { data, error } = await supabase.rpc('get_leaderboard', {
+            date_filter: dateFilter
+        });
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json({ leaderboard: data });
+    } catch (error) {
+        console.error('Leaderboard error:', error);
+        res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    }
+});
+
 // Get user's leads with pagination
 router.get('/', async (req, res) => {
     try {
@@ -89,18 +116,40 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Create new lead
+// Create new lead with duplicate checking
 router.post('/', validateLead, async (req, res) => {
     try {
-        const { name, contact, source = 'website', status = 'new' } = req.body;
+        const { name, phone_number, campaign_id, ap, mv, repairs_needed, bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info } = req.body;
+
+        // Check for duplicate phone number
+        const { data: duplicates } = await supabase
+            .from('leads')
+            .select('id, name, phone_number, created_at, user_id')
+            .eq('phone_number', phone_number);
+
+        let status = 'new';
+        if (duplicates && duplicates.length > 0) {
+            status = 'duplicate';
+        }
 
         const { data, error } = await supabase
             .from('leads')
             .insert({
                 user_id: req.user.id,
                 name,
-                contact,
-                source,
+                phone_number,
+                campaign_id,
+                ap,
+                mv,
+                repairs_needed,
+                bedrooms,
+                bathrooms,
+                condition_rating,
+                occupancy,
+                reason,
+                closing,
+                address,
+                additional_info,
                 status
             })
             .select()
@@ -110,7 +159,11 @@ router.post('/', validateLead, async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
-        res.status(201).json({ lead: data });
+        res.status(201).json({ 
+            lead: data,
+            isDuplicate: status === 'duplicate',
+            duplicateCount: duplicates ? duplicates.length : 0
+        });
     } catch (error) {
         console.error('Create lead error:', error);
         res.status(500).json({ error: 'Failed to create lead' });
@@ -121,31 +174,51 @@ router.post('/', validateLead, async (req, res) => {
 router.put('/:id', validateLead, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, contact, source, status } = req.body;
+        const { name, phone_number, campaign_id, ap, mv, repairs_needed, bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info, status } = req.body;
 
-        // Verify lead belongs to user
-        const { data: existingLead } = await supabase
+        // Verify lead belongs to user (unless admin)
+        let query = supabase
             .from('leads')
-            .select('id')
-            .eq('id', id)
-            .eq('user_id', req.user.id)
-            .single();
+            .select('id, user_id')
+            .eq('id', id);
+
+        if (!req.user.isAdmin) {
+            query = query.eq('user_id', req.user.id);
+        }
+
+        const { data: existingLead } = await query.single();
 
         if (!existingLead) {
             return res.status(404).json({ error: 'Lead not found' });
         }
 
+        const updateData = {
+            name,
+            phone_number,
+            campaign_id,
+            ap,
+            mv,
+            repairs_needed,
+            bedrooms,
+            bathrooms,
+            condition_rating,
+            occupancy,
+            reason,
+            closing,
+            address,
+            additional_info,
+            updated_at: new Date().toISOString()
+        };
+
+        // Only allow status update if admin
+        if (req.user.isAdmin && status) {
+            updateData.status = status;
+        }
+
         const { data, error } = await supabase
             .from('leads')
-            .update({
-                name,
-                contact,
-                source,
-                status,
-                updated_at: new Date().toISOString()
-            })
+            .update(updateData)
             .eq('id', id)
-            .eq('user_id', req.user.id)
             .select()
             .single();
 
