@@ -13,45 +13,39 @@ class Dashboard {
     }
 
     async init() {
-        await this.checkAuth();
+        // Wait for main.js to complete authentication
+        await this.waitForAuth();
         this.setupEventListeners();
         await this.loadStats();
         await this.loadLeads();
     }
 
-    async checkAuth() {
-        try {
-            // Add timeout to prevent hanging
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
-                credentials: 'include',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                window.location.href = 'login.html';
+    async waitForAuth() {
+        // Wait for main.js to complete authentication check
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait
+        
+        while (attempts < maxAttempts) {
+            // Check if main.js has completed authentication
+            if (window.crmApp && window.crmApp.currentUser) {
+                this.currentUser = window.crmApp.currentUser;
+                
+                // Update user email display
+                const userEmail = document.getElementById('userEmail');
+                if (userEmail) {
+                    userEmail.textContent = this.currentUser.email;
+                }
                 return;
             }
             
-            const data = await response.json();
-            this.currentUser = data.user;
-            
-            // Update user email display
-            const userEmail = document.getElementById('userEmail');
-            if (userEmail) {
-                userEmail.textContent = this.currentUser.email;
-            }
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            if (error.name === 'AbortError') {
-                console.log('Auth check timed out, redirecting to login');
-            }
-            window.location.href = 'login.html';
+            // Wait 100ms before next check
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
         }
+        
+        // If auth didn't complete, redirect to login
+        console.log('Auth timeout, redirecting to login');
+        window.location.href = 'login.html';
     }
 
     setupEventListeners() {

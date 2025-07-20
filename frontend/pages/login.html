@@ -132,8 +132,11 @@
                             localStorage.setItem('authToken', data.token);
                         }
                         
-                        // Redirect to dashboard immediately
-                        window.location.href = 'dashboard.html';
+                        // Small delay to ensure token is stored
+                        setTimeout(() => {
+                            // Redirect to dashboard immediately
+                            window.location.href = 'dashboard.html';
+                        }, 200);
                     } else {
                         throw new Error(data.error || 'Login failed');
                     }

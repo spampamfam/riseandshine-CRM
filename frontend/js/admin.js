@@ -6,50 +6,39 @@ class AdminPanel {
     }
 
     async init() {
-        await this.checkAuth();
+        // Wait for main.js to complete authentication
+        await this.waitForAuth();
         this.setupEventListeners();
         this.loadContent();
     }
 
-    async checkAuth() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                this.currentUser = data.user;
+    async waitForAuth() {
+        // Wait for main.js to complete authentication check
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait
+        
+        while (attempts < maxAttempts) {
+            // Check if main.js has completed authentication
+            if (window.crmApp && window.crmApp.currentUser) {
+                this.currentUser = window.crmApp.currentUser;
                 
-                // Check admin status
-                await this.checkAdminStatus();
-                
+                // Check if user is admin
                 if (!this.currentUser.isAdmin) {
+                    console.log('User is not admin, redirecting to dashboard');
                     window.location.href = 'dashboard.html';
+                    return;
                 }
-            } else {
-                window.location.href = 'login.html';
+                return;
             }
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            window.location.href = 'login.html';
-        }
-    }
-
-    async checkAdminStatus() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
-                credentials: 'include'
-            });
             
-            if (response.ok) {
-                const data = await response.json();
-                this.currentUser.isAdmin = data.isAdmin;
-            }
-        } catch (error) {
-            console.error('Admin status check failed:', error);
-            this.currentUser.isAdmin = false;
+            // Wait 100ms before next check
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
         }
+        
+        // If auth didn't complete, redirect to login
+        console.log('Auth timeout, redirecting to login');
+        window.location.href = 'login.html';
     }
 
     setupEventListeners() {

@@ -54,11 +54,23 @@ class CRMApp {
                 document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.railway.app;';
                 document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                 
+                // Clear localStorage token
+                localStorage.removeItem('authToken');
+                
                 // If we're on a protected page, redirect to login
                 const protectedPages = ['dashboard.html', 'admin.html'];
                 const currentPage = window.location.pathname.split('/').pop();
                 if (protectedPages.includes(currentPage)) {
+                    console.log('🔍 Redirecting to login from protected page');
                     window.location.href = 'login.html';
+                    return;
+                }
+                
+                // If we're already on login/register page, don't redirect
+                const authPages = ['login.html', 'register.html'];
+                if (authPages.includes(currentPage)) {
+                    console.log('🔍 Already on auth page, not redirecting');
+                    this.updateUIForUnauthenticatedUser();
                     return;
                 }
                 
