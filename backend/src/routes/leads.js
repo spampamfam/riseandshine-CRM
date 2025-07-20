@@ -119,7 +119,14 @@ router.get('/', async (req, res) => {
 // Create new lead with duplicate checking
 router.post('/', validateLead, async (req, res) => {
     try {
-        const { name, phone_number, campaign_id, ap, mv, repairs_needed, bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info } = req.body;
+        console.log('🔍 Creating new lead with data:', req.body);
+        
+        const { name, phone_number, campaign_id, listed, ap, mv, repairs_needed, bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info } = req.body;
+
+        console.log('🔍 Extracted lead data:', {
+            name, phone_number, campaign_id, listed, ap, mv, repairs_needed, 
+            bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info
+        });
 
         // Check for duplicate phone number
         const { data: duplicates } = await supabase
@@ -132,32 +139,40 @@ router.post('/', validateLead, async (req, res) => {
             status = 'duplicate';
         }
 
+        const leadData = {
+            user_id: req.user.id,
+            name,
+            phone_number,
+            campaign_id,
+            listed,
+            ap,
+            mv,
+            repairs_needed,
+            bedrooms,
+            bathrooms,
+            condition_rating,
+            occupancy,
+            reason,
+            closing,
+            address,
+            additional_info,
+            status
+        };
+
+        console.log('🔍 Inserting lead data:', leadData);
+
         const { data, error } = await supabase
             .from('leads')
-            .insert({
-                user_id: req.user.id,
-                name,
-                phone_number,
-                campaign_id,
-                ap,
-                mv,
-                repairs_needed,
-                bedrooms,
-                bathrooms,
-                condition_rating,
-                occupancy,
-                reason,
-                closing,
-                address,
-                additional_info,
-                status
-            })
+            .insert(leadData)
             .select()
             .single();
 
         if (error) {
+            console.error('🔍 Lead creation error:', error);
             return res.status(500).json({ error: error.message });
         }
+
+        console.log('🔍 Lead created successfully:', data);
 
         res.status(201).json({ 
             lead: data,

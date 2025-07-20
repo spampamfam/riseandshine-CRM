@@ -533,6 +533,7 @@ class Dashboard {
                 await this.loadStats();
                 await this.loadLeads();
             } else {
+                console.error('🔍 Lead submission error response:', data);
                 throw new Error(data.error || 'Failed to save lead');
             }
         } catch (error) {

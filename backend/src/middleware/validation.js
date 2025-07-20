@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        console.log('🔍 Validation errors:', errors.array());
         return res.status(400).json({ 
             error: 'Validation failed', 
             details: errors.array() 
@@ -50,19 +51,67 @@ const validateLead = [
         .trim()
         .isLength({ min: 1, max: 255 })
         .withMessage('Name is required and must be less than 255 characters'),
-    body('contact')
+    body('phone_number')
         .trim()
         .isLength({ min: 1, max: 255 })
-        .withMessage('Contact is required and must be less than 255 characters'),
-    body('source')
+        .withMessage('Phone number is required and must be less than 255 characters'),
+    body('campaign_id')
+        .optional()
+        .isUUID()
+        .withMessage('Campaign ID must be a valid UUID'),
+    body('listed')
+        .optional()
+        .isIn(['listed_with_realtor', 'listed_by_owner', 'not_listed'])
+        .withMessage('Listed must be one of: listed_with_realtor, listed_by_owner, not_listed'),
+    body('ap')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('AP must be a positive number'),
+    body('mv')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('MV must be a positive number'),
+    body('repairs_needed')
+        .optional()
+        .trim()
+        .isLength({ max: 1000 })
+        .withMessage('Repairs needed must be less than 1000 characters'),
+    body('bedrooms')
+        .optional()
+        .isInt({ min: 1, max: 10 })
+        .withMessage('Bedrooms must be between 1 and 10'),
+    body('bathrooms')
+        .optional()
+        .isFloat({ min: 0.5, max: 10 })
+        .withMessage('Bathrooms must be between 0.5 and 10'),
+    body('condition_rating')
+        .optional()
+        .isInt({ min: 1, max: 10 })
+        .withMessage('Condition rating must be between 1 and 10'),
+    body('occupancy')
+        .optional()
+        .isIn(['owner_occupied', 'tenants', 'vacant'])
+        .withMessage('Occupancy must be one of: owner_occupied, tenants, vacant'),
+    body('reason')
+        .optional()
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage('Reason must be less than 500 characters'),
+    body('closing')
         .optional()
         .trim()
         .isLength({ max: 100 })
-        .withMessage('Source must be less than 100 characters'),
-    body('status')
+        .withMessage('Closing must be less than 100 characters'),
+    body('address')
         .optional()
-        .isIn(['new', 'contacted', 'qualified', 'converted'])
-        .withMessage('Status must be one of: new, contacted, qualified, converted'),
+        .trim()
+        .isLength({ max: 500 })
+        .withMessage('Address must be less than 500 characters'),
+    body('additional_info')
+        .optional()
+        .trim()
+        .isLength({ max: 1000 })
+        .withMessage('Additional info must be less than 1000 characters'),
     handleValidationErrors
 ];
 
