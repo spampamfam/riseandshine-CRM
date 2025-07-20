@@ -13,6 +13,9 @@ class CRMApp {
 
     async checkAuth() {
         try {
+            console.log('🔍 Checking authentication...');
+            console.log('🔍 Current cookies:', document.cookie);
+            
             // Add timeout to prevent hanging
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
@@ -24,8 +27,11 @@ class CRMApp {
             
             clearTimeout(timeoutId);
             
+            console.log('🔍 Auth response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 Auth successful, user:', data.user);
                 this.currentUser = data.user;
                 
                 // Check admin status with timeout
@@ -33,8 +39,19 @@ class CRMApp {
                 
                 this.updateUIForAuthenticatedUser();
             } else if (response.status === 401) {
+                console.log('🔍 Auth failed with 401, clearing cookies');
                 // Clear any invalid cookies
+                document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.railway.app;';
                 document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                
+                // If we're on a protected page, redirect to login
+                const protectedPages = ['dashboard.html', 'admin.html'];
+                const currentPage = window.location.pathname.split('/').pop();
+                if (protectedPages.includes(currentPage)) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
                 this.updateUIForUnauthenticatedUser();
             } else {
                 this.updateUIForUnauthenticatedUser();

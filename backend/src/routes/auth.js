@@ -63,8 +63,9 @@ router.post('/register', validateRegistration, async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined
         });
 
         res.status(201).json({
@@ -109,8 +110,9 @@ router.post('/login', validateLogin, async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000,
+            domain: process.env.NODE_ENV === 'production' ? '.railway.app' : undefined
         });
 
         res.json({
@@ -133,17 +135,43 @@ router.post('/logout', (req, res) => {
 });
 
 // Get current user
-router.get('/me', authMiddleware, async (req, res) => {
+router.get('/me', async (req, res) => {
     try {
-        console.log('🔍 /me endpoint called, user:', req.user);
+        const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        // Verify our custom JWT token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Get user data from Supabase
+        const { data: user, error } = await supabase
+            .from('auth.users')
+            .select('id, email, created_at')
+            .eq('id', decoded.userId)
+            .single();
+
+        if (error || !user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        console.log('🔍 /me endpoint called, user:', user);
         res.json({
             user: {
-                id: req.user.id,
-                email: req.user.email,
-                created_at: req.user.created_at
+                id: user.id,
+                email: user.email,
+                created_at: user.created_at
             }
         });
     } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token expired' });
+        }
         console.error('Get user error:', error);
         res.status(500).json({ error: 'Failed to get user data' });
     }
