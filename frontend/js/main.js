@@ -77,20 +77,37 @@ class CRMApp {
 
     async checkAdminStatus() {
         try {
+            console.log('🔍 Checking admin status...');
+            
+            // Get token from localStorage
+            const localToken = localStorage.getItem('authToken');
+            
             // Add timeout to prevent hanging
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
                 credentials: 'include',
+                headers,
                 signal: controller.signal
             });
             
             clearTimeout(timeoutId);
             
+            console.log('🔍 Admin status response:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 Admin status data:', data);
                 this.currentUser.isAdmin = data.isAdmin;
+            } else {
+                console.log('🔍 Admin status failed, defaulting to non-admin');
+                this.currentUser.isAdmin = false;
             }
         } catch (error) {
             console.error('Admin status check failed:', error);

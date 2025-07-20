@@ -145,8 +145,15 @@ class Dashboard {
 
     async loadStats() {
         try {
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/leads/stats', {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
             
             if (response.ok) {
@@ -197,8 +204,15 @@ class Dashboard {
                 ...this.currentFilters
             });
 
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads?${params}`, {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
             
             if (response.ok) {
@@ -369,8 +383,15 @@ class Dashboard {
 
     async loadCampaigns() {
         try {
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/admin/campaigns', {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
             
             if (response.ok) {

@@ -113,8 +113,15 @@ class AdminPanel {
 
     async loadCampaigns() {
         try {
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/admin/campaigns`, {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
             
             if (response.ok) {
@@ -159,8 +166,15 @@ class AdminPanel {
     async loadUsers() {
         try {
             console.log('Loading users...');
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/admin/users`, {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
             
             console.log('Users response status:', response.status);
