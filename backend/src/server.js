@@ -28,10 +28,10 @@ app.use(helmet({
     },
 }));
 
-// Rate limiting
+// Rate limiting - More lenient for development
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // Increased to 1000 requests per windowMs
     message: {
         error: 'Too many requests from this IP, please try again later.'
     },
@@ -39,13 +39,39 @@ const limiter = rateLimit({
     legacyHeaders: false,
     // Fix for Railway deployment
     trustProxy: true,
+    // Skip rate limiting for health checks
+    skip: (req) => req.path === '/health'
 });
 
 app.use(limiter);
 
 // CORS configuration
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'http://localhost:8080',
+            'http://localhost:3000',
+            'http://127.0.0.1:8080',
+            'http://127.0.0.1:3000',
+            'https://riseandshine-crm.vercel.app',
+            'https://riseandshine-crm-production.up.railway.app'
+        ];
+        
+        // Add CORS_ORIGIN from environment if it exists
+        if (process.env.CORS_ORIGIN) {
+            allowedOrigins.push(process.env.CORS_ORIGIN);
+        }
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };

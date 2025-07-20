@@ -210,7 +210,7 @@ CREATE POLICY "Section fields are manageable by admins" ON section_fields
         )
     );
 
--- Create functions for form management
+-- Create functions for form management here
 CREATE OR REPLACE FUNCTION get_form_structure()
 RETURNS JSON AS $$
 DECLARE

@@ -9,6 +9,42 @@ const router = express.Router();
 // Apply auth middleware to all routes
 router.use(authMiddleware);
 
+// Check for duplicate phone numbers
+router.post('/check-duplicate', async (req, res) => {
+    try {
+        const { phone_number } = req.body;
+        
+        if (!phone_number) {
+            return res.status(400).json({ error: 'Phone number is required' });
+        }
+
+        // Check for duplicates across all users (for admin) or just current user
+        let query = supabase
+            .from('leads')
+            .select('id, name, phone_number, created_at, user_id')
+            .eq('phone_number', phone_number);
+
+        // If not admin, only check current user's leads
+        if (!req.user.isAdmin) {
+            query = query.eq('user_id', req.user.id);
+        }
+
+        const { data: duplicates, error } = await query;
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json({ 
+            isDuplicate: duplicates.length > 0,
+            duplicates: duplicates
+        });
+    } catch (error) {
+        console.error('Check duplicate error:', error);
+        res.status(500).json({ error: 'Failed to check for duplicates' });
+    }
+});
+
 // Get user's leads with pagination
 router.get('/', async (req, res) => {
     try {

@@ -67,6 +67,15 @@ class Dashboard {
             exportBtn.addEventListener('click', () => this.exportLeads());
         }
 
+        // Tab switching
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                this.switchTab(tabName);
+            });
+        });
+
         // Search and filter
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
@@ -84,6 +93,14 @@ class Dashboard {
                 this.currentPage = 1;
                 this.loadLeads();
             });
+        }
+
+        // Duplicate search
+        const duplicateSearchInput = document.getElementById('duplicateSearchInput');
+        if (duplicateSearchInput) {
+            duplicateSearchInput.addEventListener('input', this.debounce(() => {
+                this.loadDuplicates();
+            }, 300));
         }
 
         // Modal events
@@ -141,6 +158,27 @@ class Dashboard {
         document.getElementById('inventoryLeads').textContent = this.stats.inventory || 0;
     }
 
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+
+        // Load content based on tab
+        if (tabName === 'leads') {
+            this.loadLeads();
+        } else if (tabName === 'duplicates') {
+            this.loadDuplicates();
+        }
+    }
+
     async loadLeads() {
         try {
             const params = new URLSearchParams({
@@ -162,6 +200,30 @@ class Dashboard {
         } catch (error) {
             console.error('Failed to load leads:', error);
             this.showNotification('Failed to load leads', 'error');
+        }
+    }
+
+    async loadDuplicates() {
+        try {
+            const searchTerm = document.getElementById('duplicateSearchInput')?.value || '';
+            const params = new URLSearchParams({
+                page: this.currentPage,
+                limit: this.itemsPerPage,
+                search: searchTerm
+            });
+
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads/duplicates?${params}`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.renderDuplicatesTable(data.duplicates);
+                this.renderDuplicatesPagination(data.pagination);
+            }
+        } catch (error) {
+            console.error('Failed to load duplicates:', error);
+            this.showNotification('Failed to load duplicates', 'error');
         }
     }
 
@@ -351,6 +413,19 @@ class Dashboard {
             status: formData.get('status')
         };
 
+        // Check for duplicates before submitting (only for new leads)
+        if (!leadId) {
+            const duplicateCheck = await this.checkForDuplicates(leadData.phone_number);
+            if (duplicateCheck.isDuplicate) {
+                const shouldContinue = confirm(
+                    `This phone number already exists in ${duplicateCheck.duplicates.length} lead(s). Do you want to continue anyway?`
+                );
+                if (!shouldContinue) {
+                    return;
+                }
+            }
+        }
+
         try {
             const url = leadId 
                 ? `https://riseandshine-crm-production.up.railway.app/api/leads/${leadId}`
@@ -382,6 +457,27 @@ class Dashboard {
         } catch (error) {
             console.error('Lead save error:', error);
             this.showNotification(error.message, 'error');
+        }
+    }
+
+    async checkForDuplicates(phoneNumber) {
+        try {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/leads/check-duplicate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ phone_number: phoneNumber })
+            });
+
+            if (response.ok) {
+                return await response.json();
+            }
+            return { isDuplicate: false, duplicates: [] };
+        } catch (error) {
+            console.error('Duplicate check error:', error);
+            return { isDuplicate: false, duplicates: [] };
         }
     }
 

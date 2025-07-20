@@ -35,6 +35,50 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 0.5rem;
         }
+
+        .dashboard-tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .tab-button {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-button:hover {
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .duplicate-warning {
+            background: var(--warning-color, #ff9800);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -92,30 +136,37 @@
                     </div>
                 </div>
 
-                <!-- Filters and Search -->
-                <div class="leads-table">
-                    <div class="table-header">
-                        <h2 class="table-title">My Leads</h2>
-                        <div class="table-actions">
-                            <input 
-                                type="text" 
-                                id="searchInput" 
-                                placeholder="Search leads..." 
-                                class="form-input"
-                                style="width: 200px; margin-right: 1rem;"
-                            >
-                            <select id="statusFilter" class="form-input" style="width: 150px; margin-right: 1rem;">
-                                <option value="">All Status</option>
-                                <option value="new">New</option>
-                                <option value="contacted">Contacted</option>
-                                <option value="qualified">Qualified</option>
-                                <option value="disqualified">Disqualified</option>
-                                <option value="callback">Callback</option>
-                                <option value="inventory">Inventory</option>
-                                <option value="converted">Converted</option>
-                            </select>
+                <!-- Dashboard Tabs -->
+                <div class="dashboard-tabs" style="margin-bottom: 2rem;">
+                    <button class="tab-button active" data-tab="leads">My Leads</button>
+                    <button class="tab-button" data-tab="duplicates">Duplicates</button>
+                </div>
+
+                <!-- Leads Tab -->
+                <div id="leadsTab" class="tab-content active">
+                    <div class="leads-table">
+                        <div class="table-header">
+                            <h2 class="table-title">My Leads</h2>
+                            <div class="table-actions">
+                                <input 
+                                    type="text" 
+                                    id="searchInput" 
+                                    placeholder="Search leads..." 
+                                    class="form-input"
+                                    style="width: 200px; margin-right: 1rem;"
+                                >
+                                <select id="statusFilter" class="form-input" style="width: 150px; margin-right: 1rem;">
+                                    <option value="">All Status</option>
+                                    <option value="new">New</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="qualified">Qualified</option>
+                                    <option value="disqualified">Disqualified</option>
+                                    <option value="callback">Callback</option>
+                                    <option value="inventory">Inventory</option>
+                                    <option value="converted">Converted</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
                     <!-- Leads Table -->
                     <div class="table-container">
@@ -142,8 +193,50 @@
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+
+            <!-- Duplicates Tab -->
+            <div id="duplicatesTab" class="tab-content">
+                <div class="leads-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Duplicate Phone Numbers</h2>
+                        <div class="table-actions">
+                            <input 
+                                type="text" 
+                                id="duplicateSearchInput" 
+                                placeholder="Search duplicates..." 
+                                class="form-input"
+                                style="width: 200px; margin-right: 1rem;"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Duplicates Table -->
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Phone Number</th>
+                                    <th>Count</th>
+                                    <th>Names</th>
+                                    <th>Created Dates</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="duplicatesTableBody">
+                                <!-- Duplicates will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Duplicates Pagination -->
+                    <div class="pagination" id="duplicatesPagination" style="padding: 1rem; text-align: center;">
+                        <!-- Pagination will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
 
     <!-- Add/Edit Lead Modal -->
     <div id="leadModal" class="modal hidden">
