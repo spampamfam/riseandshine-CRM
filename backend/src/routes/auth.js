@@ -40,7 +40,7 @@ router.post('/register', validateRegistration, async (req, res) => {
         const token = jwt.sign(
             { userId: data.user.id, email: data.user.email },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
         // Set JWT cookie
@@ -83,7 +83,7 @@ router.post('/login', validateLogin, async (req, res) => {
         const token = jwt.sign(
             { userId: data.user.id, email: data.user.email },
             process.env.JWT_SECRET,
-            { expiresIn: rememberMe ? '30d' : process.env.JWT_EXPIRES_IN }
+            { expiresIn: rememberMe ? '30d' : (process.env.JWT_EXPIRES_IN || '7d') }
         );
 
         // Set JWT cookie
