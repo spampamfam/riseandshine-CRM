@@ -457,22 +457,28 @@ class Dashboard {
         
         // No validation required since all fields are optional
         const leadData = {
-            name: formData.get('name'),
-            phone_number: formData.get('phoneNumber'),
-            campaign_id: formData.get('campaign'),
-            listed: formData.get('listed'),
-            ap: parseFloat(formData.get('ap')) || null,
-            mv: parseFloat(formData.get('mv')) || null,
-            repairs_needed: formData.get('repairsNeeded'),
-            bedrooms: parseInt(formData.get('bedrooms')) || null,
-            bathrooms: parseFloat(formData.get('bathrooms')) || null,
-            condition_rating: parseInt(formData.get('condition')) || null,
-            occupancy: formData.get('occupancy'),
-            reason: formData.get('reason'),
-            closing: formData.get('closing'),
-            address: formData.get('address'),
-            additional_info: formData.get('additionalInfo')
+            name: formData.get('name') || null,
+            phoneNumber: formData.get('phoneNumber') || null,
+            campaign: formData.get('campaign') || null,
+            listed: formData.get('listed') || null,
+            ap: formData.get('ap') ? parseFloat(formData.get('ap')) : null,
+            mv: formData.get('mv') ? parseFloat(formData.get('mv')) : null,
+            repairsNeeded: formData.get('repairsNeeded') || null,
+            bedrooms: formData.get('bedrooms') || null,
+            bathrooms: formData.get('bathrooms') || null,
+            condition: formData.get('condition') ? parseInt(formData.get('condition')) : null,
+            occupancy: formData.get('occupancy') || null,
+            reason: formData.get('reason') || null,
+            closing: formData.get('closing') || null,
+            address: formData.get('address') || null,
+            additionalInfo: formData.get('additionalInfo') || null
         };
+
+        console.log('🔍 Lead data being sent:', leadData);
+        console.log('🔍 Form data entries:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`);
+        }
 
         try {
             const url = leadId 
@@ -489,6 +495,10 @@ class Dashboard {
                 headers['Authorization'] = `Bearer ${localToken}`;
             }
 
+            console.log('🔍 Sending request to:', url);
+            console.log('🔍 Request method:', method);
+            console.log('🔍 Request headers:', headers);
+
             const response = await fetch(url, {
                 method,
                 headers,
@@ -497,6 +507,8 @@ class Dashboard {
             });
 
             const data = await response.json();
+            console.log('🔍 Response status:', response.status);
+            console.log('🔍 Response data:', data);
 
             if (response.ok) {
                 let message = leadId ? 'Lead updated successfully!' : 'Lead created successfully!';
@@ -514,6 +526,12 @@ class Dashboard {
                 await this.loadLeads();
             } else {
                 console.error('🔍 Lead submission error response:', data);
+                if (data.details && Array.isArray(data.details)) {
+                    console.error('🔍 Validation error details:');
+                    data.details.forEach((error, index) => {
+                        console.error(`  ${index + 1}. Field: ${error.path}, Value: ${error.value}, Message: ${error.msg}`);
+                    });
+                }
                 throw new Error(data.error || 'Failed to save lead');
             }
         } catch (error) {
@@ -536,7 +554,7 @@ class Dashboard {
                 method: 'POST',
                 headers,
                 credentials: 'include',
-                body: JSON.stringify({ phone_number: phoneNumber })
+                body: JSON.stringify({ phoneNumber: phoneNumber })  // Changed from phone_number to phoneNumber
             });
 
             if (response.ok) {

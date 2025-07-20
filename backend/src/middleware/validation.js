@@ -61,19 +61,35 @@ const validateLead = [
         .withMessage('Phone number must be less than 255 characters'),
     body('campaign')  // Changed from campaign_id to match frontend
         .optional()
-        .isUUID()
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            // Check if it's a valid UUID
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            return uuidRegex.test(value);
+        })
         .withMessage('Campaign must be a valid UUID'),
     body('listed')
         .optional()
-        .isIn(['listed_with_realtor', 'listed_by_owner', 'not_listed'])
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            return ['listed_with_realtor', 'listed_by_owner', 'not_listed'].includes(value);
+        })
         .withMessage('Listed must be one of: listed_with_realtor, listed_by_owner, not_listed'),
     body('ap')
         .optional()
-        .isFloat({ min: 0 })
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            const num = parseFloat(value);
+            return !isNaN(num) && num >= 0;
+        })
         .withMessage('AP must be a positive number'),
     body('mv')
         .optional()
-        .isFloat({ min: 0 })
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            const num = parseFloat(value);
+            return !isNaN(num) && num >= 0;
+        })
         .withMessage('MV must be a positive number'),
     body('repairsNeeded')  // Changed from repairs_needed to match frontend
         .optional()
@@ -84,9 +100,9 @@ const validateLead = [
         .optional()
         .custom((value) => {
             if (value === '' || value === null || value === undefined) return true;
+            if (value === '6+') return true;  // Allow 6+ as valid
             const num = parseInt(value);
             if (isNaN(num)) return false;
-            if (value === '6+') return true;  // Allow 6+ as valid
             return num >= 1 && num <= 10;
         })
         .withMessage('Bedrooms must be between 1 and 10, or 6+'),
@@ -102,11 +118,19 @@ const validateLead = [
         .withMessage('Bathrooms must be between 0.5 and 10, or 4+'),
     body('condition')  // Changed from condition_rating to match frontend
         .optional()
-        .isInt({ min: 1, max: 10 })
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            const num = parseInt(value);
+            if (isNaN(num)) return false;
+            return num >= 1 && num <= 10;
+        })
         .withMessage('Condition rating must be between 1 and 10'),
     body('occupancy')
         .optional()
-        .isIn(['owner_occupied', 'tenants', 'vacant'])
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            return ['owner_occupied', 'tenants', 'vacant'].includes(value);
+        })
         .withMessage('Occupancy must be one of: owner_occupied, tenants, vacant'),
     body('reason')
         .optional()
