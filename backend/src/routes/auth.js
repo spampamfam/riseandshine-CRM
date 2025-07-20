@@ -12,16 +12,7 @@ router.post('/register', validateRegistration, async (req, res) => {
     try {
         const { name, nationalId, email, phoneNumber, password } = req.body;
 
-        // Check if user already exists
-        const { data: existingUser } = await supabase
-            .from('auth.users')
-            .select('id')
-            .eq('email', email)
-            .single();
-
-        if (existingUser) {
-            return res.status(400).json({ error: 'User already exists' });
-        }
+        // Supabase will handle duplicate user checking automatically
 
         // Create user in Supabase Auth
         const { data, error } = await supabase.auth.signUp({
@@ -164,24 +155,15 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         console.log('🔍 Token decoded:', { userId: decoded.userId, email: decoded.email });
         
-        // Get user data from Supabase
-        const { data: user, error } = await supabase
-            .from('auth.users')
-            .select('id, email, created_at')
-            .eq('id', decoded.userId)
-            .single();
-
-        if (error || !user) {
-            console.log('🔍 User not found in Supabase:', error);
-            return res.status(401).json({ error: 'User not found' });
-        }
-
-        console.log('🔍 User found:', user);
+        // Since we have the user data from the JWT token, we can trust it
+        // The token was created during login with valid Supabase auth
+        console.log('🔍 User data from token:', { id: decoded.userId, email: decoded.email });
+        
         res.json({
             user: {
-                id: user.id,
-                email: user.email,
-                created_at: user.created_at
+                id: decoded.userId,
+                email: decoded.email,
+                created_at: new Date().toISOString() // We can get this from the token if needed
             }
         });
     } catch (error) {

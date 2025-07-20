@@ -114,10 +114,11 @@ router.get('/users', authMiddleware, checkAdminStatus, async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const offset = (page - 1) * limit;
 
-        // Get users with pagination
+        // Get users with pagination - using a different approach since we can't directly query auth.users
+        // We'll get users from our user_profiles table and join with auth data
         const { data: users, error: usersError, count } = await supabase
-            .from('auth.users')
-            .select('id, email, created_at', { count: 'exact' })
+            .from('user_profiles')
+            .select('user_id, email, name, created_at', { count: 'exact' })
             .range(offset, offset + limit - 1)
             .order('created_at', { ascending: false });
 
@@ -133,35 +134,32 @@ router.get('/users', authMiddleware, checkAdminStatus, async (req, res) => {
                     const { data: adminRole } = await supabase
                         .from('admin_roles')
                         .select('is_admin')
-                        .eq('user_id', user.id)
+                        .eq('user_id', user.user_id)
                         .single();
 
                     // Get lead count
                     const { count: leadCount } = await supabase
                         .from('leads')
                         .select('*', { count: 'exact', head: true })
-                        .eq('user_id', user.id);
-
-                    // Get user profile data
-                    const { data: profile } = await supabase
-                        .from('user_profiles')
-                        .select('name')
-                        .eq('user_id', user.id)
-                        .single();
+                        .eq('user_id', user.user_id);
 
                     return {
-                        ...user,
+                        id: user.user_id,
+                        email: user.email,
+                        name: user.name,
+                        created_at: user.created_at,
                         is_admin: adminRole?.is_admin || false,
-                        leads_count: leadCount || 0,
-                        name: profile?.name || null
+                        leads_count: leadCount || 0
                     };
                 } catch (error) {
-                    console.error(`Error processing user ${user.id}:`, error);
+                    console.error(`Error processing user ${user.user_id}:`, error);
                     return {
-                        ...user,
+                        id: user.user_id,
+                        email: user.email,
+                        name: user.name,
+                        created_at: user.created_at,
                         is_admin: false,
-                        leads_count: 0,
-                        name: null
+                        leads_count: 0
                     };
                 }
             })
