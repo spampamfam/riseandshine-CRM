@@ -80,20 +80,23 @@ router.get('/', async (req, res) => {
         
         let query = supabase
             .from('leads')
-            .select('*', { count: 'exact' })
-            .eq('user_id', req.user.id)
+            .select('*, campaigns(name)') // join campaign name
             .order('created_at', { ascending: false });
+
+        // If not admin, only show current user's leads
+        if (!req.user.isAdmin) {
+            query = query.eq('user_id', req.user.id);
+        }
 
         // Apply filters
         if (status) {
             query = query.eq('status', status);
         }
-        
         if (search) {
-            query = query.or(`name.ilike.%${search}%,contact.ilike.%${search}%`);
+            query = query.or(`name.ilike.%${search}%,phone_number.ilike.%${search}%`);
         }
 
-        // Apply pagination
+        // Pagination
         const { data: leads, error, count } = await query
             .range(offset, offset + limit - 1);
 

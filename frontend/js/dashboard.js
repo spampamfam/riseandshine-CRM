@@ -261,7 +261,7 @@ class Dashboard {
             row.innerHTML = `
                 <td>${this.escapeHtml(lead.name)}</td>
                 <td>${this.escapeHtml(lead.phone_number || lead.contact || '-')}</td>
-                <td>${this.escapeHtml(lead.campaign_name || lead.source || '-')}</td>
+                <td>${this.escapeHtml((lead.campaigns && lead.campaigns.name) || lead.campaign_name || '-') }</td>
                 <td><span class="status-badge status-${lead.status}">${lead.status}</span></td>
                 <td>${this.formatDate(lead.created_at)}</td>
                 <td>
