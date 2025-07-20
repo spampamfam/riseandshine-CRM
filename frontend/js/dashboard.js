@@ -433,24 +433,48 @@ class Dashboard {
     async handleLeadSubmit(e) {
         e.preventDefault();
         
+        // Clear previous validation errors
+        this.clearValidationErrors();
+        
         const formData = new FormData(e.target);
         const leadId = formData.get('leadId');
+        
+        // Validate required fields
+        const requiredFields = [
+            'name', 'phoneNumber', 'campaign', 'ap', 'mv', 'bedrooms', 
+            'bathrooms', 'condition', 'occupancy', 'repairsNeeded', 
+            'reason', 'closing', 'address', 'additionalInfo'
+        ];
+        
+        let hasErrors = false;
+        requiredFields.forEach(field => {
+            const value = formData.get(field);
+            if (!value || value.trim() === '') {
+                this.highlightError(field);
+                hasErrors = true;
+            }
+        });
+        
+        if (hasErrors) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
         
         const leadData = {
             name: formData.get('name'),
             phone_number: formData.get('phoneNumber'),
-            campaign_id: formData.get('campaign') || null,
-            ap: formData.get('ap') ? parseFloat(formData.get('ap')) : null,
-            mv: formData.get('mv') ? parseFloat(formData.get('mv')) : null,
-            repairs_needed: formData.get('repairsNeeded') || null,
-            bedrooms: formData.get('bedrooms') ? parseInt(formData.get('bedrooms')) : null,
-            bathrooms: formData.get('bathrooms') ? parseFloat(formData.get('bathrooms')) : null,
-            condition_rating: formData.get('condition') ? parseInt(formData.get('condition')) : null,
-            occupancy: formData.get('occupancy') || null,
-            reason: formData.get('reason') || null,
-            closing: formData.get('closing') || null,
+            campaign_id: formData.get('campaign'),
+            ap: parseFloat(formData.get('ap')),
+            mv: parseFloat(formData.get('mv')),
+            repairs_needed: formData.get('repairsNeeded'),
+            bedrooms: parseInt(formData.get('bedrooms')),
+            bathrooms: parseFloat(formData.get('bathrooms')),
+            condition_rating: parseInt(formData.get('condition')),
+            occupancy: formData.get('occupancy'),
+            reason: formData.get('reason'),
+            closing: formData.get('closing'),
             address: formData.get('address'),
-            additional_info: formData.get('additionalInfo') || null
+            additional_info: formData.get('additionalInfo')
         };
 
         try {
@@ -567,6 +591,42 @@ class Dashboard {
     editProfile() {
         // For now, just show a message. Can be expanded later
         this.showNotification('Profile editing feature coming soon!', 'info');
+    }
+
+    highlightError(fieldName) {
+        const fieldMap = {
+            'name': 'leadName',
+            'phoneNumber': 'leadPhone',
+            'campaign': 'leadCampaign',
+            'ap': 'leadAP',
+            'mv': 'leadMV',
+            'bedrooms': 'leadBedrooms',
+            'bathrooms': 'leadBathrooms',
+            'condition': 'leadCondition',
+            'occupancy': 'leadOccupancy',
+            'repairsNeeded': 'leadRepairs',
+            'reason': 'leadReason',
+            'closing': 'leadClosing',
+            'address': 'leadAddress',
+            'additionalInfo': 'leadAdditionalInfo'
+        };
+        
+        const elementId = fieldMap[fieldName];
+        if (elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.borderColor = 'var(--accent-danger)';
+                element.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+            }
+        }
+    }
+
+    clearValidationErrors() {
+        const formElements = document.querySelectorAll('#leadForm .form-input, #leadForm select, #leadForm textarea');
+        formElements.forEach(element => {
+            element.style.borderColor = '';
+            element.style.boxShadow = '';
+        });
     }
 
     async confirmDelete() {

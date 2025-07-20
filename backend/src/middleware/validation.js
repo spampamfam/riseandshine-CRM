@@ -12,10 +12,22 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 const validateRegistration = [
+    body('name')
+        .trim()
+        .isLength({ min: 1, max: 255 })
+        .withMessage('Name is required and must be less than 255 characters'),
+    body('nationalId')
+        .trim()
+        .isLength({ min: 5, max: 50 })
+        .withMessage('National ID is required and must be between 5-50 characters'),
     body('email')
         .isEmail()
         .normalizeEmail()
         .withMessage('Valid email is required'),
+    body('phoneNumber')
+        .trim()
+        .isLength({ min: 10, max: 20 })
+        .withMessage('Phone number is required and must be between 10-20 characters'),
     body('password')
         .isLength({ min: 6 })
         .withMessage('Password must be at least 6 characters long'),

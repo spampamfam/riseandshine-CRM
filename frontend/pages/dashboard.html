@@ -256,8 +256,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="leadCampaign" class="form-label">Campaign</label>
-                        <select id="leadCampaign" name="campaign" class="form-input">
+                        <label for="leadCampaign" class="form-label">Campaign *</label>
+                        <select id="leadCampaign" name="campaign" class="form-input" required>
                             <option value="">Select Campaign</option>
                             <!-- Campaign options will be loaded dynamically -->
                         </select>
@@ -269,18 +269,18 @@
                     <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Property Details</h3>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="leadAP" class="form-label">AP (Asking Price)</label>
-                            <input type="number" id="leadAP" name="ap" class="form-input" placeholder="Enter asking price">
+                            <label for="leadAP" class="form-label">AP (Asking Price) *</label>
+                            <input type="number" id="leadAP" name="ap" class="form-input" required placeholder="Enter asking price">
                         </div>
                         <div class="form-group">
-                            <label for="leadMV" class="form-label">MV (Market Value)</label>
-                            <input type="number" id="leadMV" name="mv" class="form-input" placeholder="Enter market value">
+                            <label for="leadMV" class="form-label">MV (Market Value) *</label>
+                            <input type="number" id="leadMV" name="mv" class="form-input" required placeholder="Enter market value">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="leadBedrooms" class="form-label">Bedrooms</label>
-                            <select id="leadBedrooms" name="bedrooms" class="form-input">
+                            <label for="leadBedrooms" class="form-label">Bedrooms *</label>
+                            <select id="leadBedrooms" name="bedrooms" class="form-input" required>
                                 <option value="">Select</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -291,8 +291,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="leadBathrooms" class="form-label">Bathrooms</label>
-                            <select id="leadBathrooms" name="bathrooms" class="form-input">
+                            <label for="leadBathrooms" class="form-label">Bathrooms *</label>
+                            <select id="leadBathrooms" name="bathrooms" class="form-input" required>
                                 <option value="">Select</option>
                                 <option value="1">1</option>
                                 <option value="1.5">1.5</option>
@@ -307,8 +307,8 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="leadCondition" class="form-label">Condition (1-10 Scale)</label>
-                            <select id="leadCondition" name="condition" class="form-input">
+                            <label for="leadCondition" class="form-label">Condition (1-10 Scale) *</label>
+                            <select id="leadCondition" name="condition" class="form-input" required>
                                 <option value="">Select Condition</option>
                                 <option value="1">1 - Very Poor</option>
                                 <option value="2">2 - Poor</option>
@@ -323,8 +323,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="leadOccupancy" class="form-label">Occupancy</label>
-                            <select id="leadOccupancy" name="occupancy" class="form-input">
+                            <label for="leadOccupancy" class="form-label">Occupancy *</label>
+                            <select id="leadOccupancy" name="occupancy" class="form-input" required>
                                 <option value="">Select Occupancy</option>
                                 <option value="owner_occupied">Owner Occupied</option>
                                 <option value="tenants">Tenants</option>
@@ -333,8 +333,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="leadRepairs" class="form-label">Repairs Needed</label>
-                        <textarea id="leadRepairs" name="repairsNeeded" class="form-input" rows="3" placeholder="Describe repairs needed..."></textarea>
+                        <label for="leadRepairs" class="form-label">Repairs Needed *</label>
+                        <textarea id="leadRepairs" name="repairsNeeded" class="form-input" rows="3" required placeholder="Describe repairs needed..."></textarea>
                     </div>
                 </div>
 
@@ -342,12 +342,12 @@
                 <div class="form-section">
                     <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Deal Information</h3>
                     <div class="form-group">
-                        <label for="leadReason" class="form-label">Reason for Selling</label>
-                        <textarea id="leadReason" name="reason" class="form-input" rows="2" placeholder="Why is the property being sold?"></textarea>
+                        <label for="leadReason" class="form-label">Reason for Selling *</label>
+                        <textarea id="leadReason" name="reason" class="form-input" rows="2" required placeholder="Why is the property being sold?"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="leadClosing" class="form-label">Closing Timeline</label>
-                        <input type="text" id="leadClosing" name="closing" class="form-input" placeholder="e.g., ASAP, 30 days, 60 days">
+                        <label for="leadClosing" class="form-label">Closing Timeline *</label>
+                        <input type="text" id="leadClosing" name="closing" class="form-input" required placeholder="e.g., ASAP, 30 days, 60 days">
                     </div>
                 </div>
 
@@ -364,8 +364,8 @@
                 <div class="form-section">
                     <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Additional Information</h3>
                     <div class="form-group">
-                        <label for="leadAdditionalInfo" class="form-label">Additional Info</label>
-                        <textarea id="leadAdditionalInfo" name="additionalInfo" class="form-input" rows="4" placeholder="Any additional notes or information..."></textarea>
+                        <label for="leadAdditionalInfo" class="form-label">Additional Info *</label>
+                        <textarea id="leadAdditionalInfo" name="additionalInfo" class="form-input" rows="4" required placeholder="Any additional notes or information..."></textarea>
                     </div>
                 </div>
 

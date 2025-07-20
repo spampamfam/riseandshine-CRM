@@ -10,7 +10,7 @@ const router = express.Router();
 // Register new user
 router.post('/register', validateRegistration, async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { name, nationalId, email, phoneNumber, password } = req.body;
 
         // Check if user already exists
         const { data: existingUser } = await supabase
@@ -36,6 +36,22 @@ router.post('/register', validateRegistration, async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
+        // Store additional user data in a custom table
+        const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+                user_id: data.user.id,
+                name,
+                national_id: nationalId,
+                phone_number: phoneNumber,
+                email
+            });
+
+        if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Don't fail registration if profile creation fails
+        }
+
         // Generate JWT token
         const token = jwt.sign(
             { userId: data.user.id, email: data.user.email },
@@ -55,7 +71,10 @@ router.post('/register', validateRegistration, async (req, res) => {
             message: 'User registered successfully',
             user: {
                 id: data.user.id,
-                email: data.user.email
+                email: data.user.email,
+                name,
+                nationalId,
+                phoneNumber
             }
         });
     } catch (error) {
