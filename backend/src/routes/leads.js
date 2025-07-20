@@ -77,28 +77,36 @@ router.get('/', async (req, res) => {
     try {
         const { page = 1, limit = 10, status, search } = req.query;
         const offset = (page - 1) * limit;
-        
-        let query = supabase
-            .from('leads')
-            .select('*, campaigns(name)') // join campaign name
-            .order('created_at', { ascending: false });
+        let leads, count, error;
 
-        // If not admin, only show current user's leads
-        if (!req.user.isAdmin) {
-            query = query.eq('user_id', req.user.id);
+        if (req.user.isAdmin) {
+            // Use the SQL function for admins
+            const { data, error: funcError } = await supabase
+                .rpc('get_all_leads');
+            if (funcError) {
+                return res.status(500).json({ error: funcError.message });
+            }
+            // Manual pagination
+            leads = data.slice(offset, offset + parseInt(limit));
+            count = data.length;
+        } else {
+            // Regular select for non-admins
+            let query = supabase
+                .from('leads')
+                .select('*, campaigns(name)')
+                .eq('user_id', req.user.id)
+                .order('created_at', { ascending: false });
+            if (status) {
+                query = query.eq('status', status);
+            }
+            if (search) {
+                query = query.or(`name.ilike.%${search}%,phone_number.ilike.%${search}%`);
+            }
+            const resp = await query.range(offset, offset + limit - 1);
+            leads = resp.data;
+            count = resp.count;
+            error = resp.error;
         }
-
-        // Apply filters
-        if (status) {
-            query = query.eq('status', status);
-        }
-        if (search) {
-            query = query.or(`name.ilike.%${search}%,phone_number.ilike.%${search}%`);
-        }
-
-        // Pagination
-        const { data: leads, error, count } = await query
-            .range(offset, offset + limit - 1);
 
         if (error) {
             return res.status(500).json({ error: error.message });
