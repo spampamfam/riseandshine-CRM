@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS section_fields (
 -- Update leads table with new fields
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20);
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns(id);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS listed VARCHAR(50) CHECK (listed IN ('listed_with_realtor', 'listed_by_owner', 'not_listed'));
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS ap DECIMAL(12,2); -- Asking Price
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS mv DECIMAL(12,2); -- Market Value
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS repairs_needed TEXT;
@@ -96,18 +97,19 @@ INSERT INTO form_fields (field_name, field_type, field_label, field_placeholder,
 ('name', 'text', 'Name', 'Enter full name', true, 1, NULL),
 ('phone_number', 'tel', 'Phone Number', 'Enter phone number', true, 2, NULL),
 ('campaign_id', 'select', 'Campaign', 'Select campaign', false, 3, '[]'),
-('ap', 'number', 'AP (Asking Price)', 'Enter asking price', false, 4, NULL),
-('mv', 'number', 'MV (Market Value)', 'Enter market value', false, 5, NULL),
-('bedrooms', 'select', 'Bedrooms', 'Select number of bedrooms', false, 6, '["1","2","3","4","5","6+"]'),
-('bathrooms', 'select', 'Bathrooms', 'Select number of bathrooms', false, 7, '["1","1.5","2","2.5","3","3.5","4","4+"]'),
-('condition_rating', 'select', 'Condition (1-10 Scale)', 'Select condition rating', false, 8, '["1 - Very Poor","2 - Poor","3 - Fair","4 - Below Average","5 - Average","6 - Above Average","7 - Good","8 - Very Good","9 - Excellent","10 - Perfect"]'),
-('occupancy', 'select', 'Occupancy', 'Select occupancy status', false, 9, '["owner_occupied","tenants","vacant"]'),
-('repairs_needed', 'textarea', 'Repairs Needed', 'Describe repairs needed', false, 10, NULL),
-('reason', 'textarea', 'Reason for Selling', 'Why is the property being sold?', false, 11, NULL),
-('closing', 'text', 'Closing Timeline', 'e.g., ASAP, 30 days, 60 days', false, 12, NULL),
-('address', 'textarea', 'Address', 'Enter full property address', true, 13, NULL),
-('additional_info', 'textarea', 'Additional Info', 'Any additional notes or information', false, 14, NULL),
-('status', 'select', 'Status', 'Select lead status', false, 15, '["new","contacted","qualified","disqualified","callback","inventory","converted"]')
+('listed', 'select', 'Listed', 'Select listing status', false, 4, '["listed_with_realtor","listed_by_owner","not_listed"]'),
+('ap', 'number', 'AP (Asking Price)', 'Enter asking price', false, 5, NULL),
+('mv', 'number', 'MV (Market Value)', 'Enter market value', false, 6, NULL),
+('bedrooms', 'select', 'Bedrooms', 'Select number of bedrooms', false, 7, '["1","2","3","4","5","6+"]'),
+('bathrooms', 'select', 'Bathrooms', 'Select number of bathrooms', false, 8, '["1","1.5","2","2.5","3","3.5","4","4+"]'),
+('condition_rating', 'select', 'Condition (1-10 Scale)', 'Select condition rating', false, 9, '["1 - Very Poor","2 - Poor","3 - Fair","4 - Below Average","5 - Average","6 - Above Average","7 - Good","8 - Very Good","9 - Excellent","10 - Perfect"]'),
+('occupancy', 'select', 'Occupancy', 'Select occupancy status', false, 10, '["owner_occupied","tenants","vacant"]'),
+('repairs_needed', 'textarea', 'Repairs Needed', 'Describe repairs needed', false, 11, NULL),
+('reason', 'textarea', 'Reason for Selling', 'Why is the property being sold?', false, 12, NULL),
+('closing', 'text', 'Closing Timeline', 'e.g., ASAP, 30 days, 60 days', false, 13, NULL),
+('address', 'textarea', 'Address', 'Enter full property address', true, 14, NULL),
+('additional_info', 'textarea', 'Additional Info', 'Any additional notes or information', false, 15, NULL),
+('status', 'select', 'Status', 'Select lead status', false, 16, '["new","contacted","qualified","disqualified","callback","inventory","converted"]')
 ON CONFLICT (field_name) DO NOTHING;
 
 -- Map fields to sections (now that both tables exist)
@@ -119,7 +121,7 @@ SELECT
     f.is_required
 FROM form_sections s
 JOIN form_fields f ON 
-    (s.section_name = 'basic_info' AND f.field_name IN ('name', 'phone_number', 'campaign_id')) OR
+    (s.section_name = 'basic_info' AND f.field_name IN ('name', 'phone_number', 'campaign_id', 'listed')) OR
     (s.section_name = 'property_details' AND f.field_name IN ('ap', 'mv', 'bedrooms', 'bathrooms', 'condition_rating', 'occupancy', 'repairs_needed')) OR
     (s.section_name = 'deal_info' AND f.field_name IN ('reason', 'closing')) OR
     (s.section_name = 'location' AND f.field_name IN ('address')) OR
