@@ -81,8 +81,9 @@ router.get('/', async (req, res) => {
 
         if (req.user.isAdmin) {
             // Use the SQL function for admins
-            const { data, error: funcError } = await supabase
-                .rpc('get_all_leads');
+            const { data, error: funcError } = await supabase.rpc('get_all_leads');
+            console.log('DEBUG: get_all_leads result:', data);
+            console.log('DEBUG: get_all_leads error:', funcError);
             if (funcError) {
                 return res.status(500).json({ error: funcError.message });
             }
