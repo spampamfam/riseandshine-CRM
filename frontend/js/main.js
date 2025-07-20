@@ -16,12 +16,22 @@ class CRMApp {
             console.log('🔍 Checking authentication...');
             console.log('🔍 Current cookies:', document.cookie);
             
+            // Get token from localStorage as fallback
+            const localToken = localStorage.getItem('authToken');
+            console.log('🔍 Local token:', localToken ? 'Found' : 'Not found');
+            
             // Add timeout to prevent hanging
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
                 credentials: 'include',
+                headers,
                 signal: controller.signal
             });
             
@@ -151,6 +161,10 @@ class CRMApp {
             
             if (response.ok) {
                 this.currentUser = null;
+                
+                // Clear localStorage token
+                localStorage.removeItem('authToken');
+                
                 this.updateUIForUnauthenticatedUser();
                 
                 // Redirect to homepage (not /)

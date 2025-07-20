@@ -126,6 +126,12 @@
                     
                     if (response.ok) {
                         console.log('🔐 Login successful, cookies after login:', document.cookie);
+                        
+                        // Store token in localStorage as fallback
+                        if (data.token) {
+                            localStorage.setItem('authToken', data.token);
+                        }
+                        
                         // Redirect to dashboard immediately
                         window.location.href = 'dashboard.html';
                     } else {

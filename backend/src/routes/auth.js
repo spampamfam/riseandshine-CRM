@@ -107,8 +107,8 @@ router.post('/login', validateLogin, async (req, res) => {
         // Set JWT cookie
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: true, // Always secure for production
+            sameSite: 'none', // Required for cross-domain
             maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000
         };
         
@@ -118,6 +118,7 @@ router.post('/login', validateLogin, async (req, res) => {
         console.log('🔐 Login successful, sending response');
         res.json({
             message: 'Login successful',
+            token: token, // Include token in response for localStorage fallback
             user: {
                 id: data.user.id,
                 email: data.user.email
