@@ -12,9 +12,9 @@ router.use(authMiddleware);
 // Check for duplicate phone numbers
 router.post('/check-duplicate', async (req, res) => {
     try {
-        const { phone_number } = req.body;
+        const { phoneNumber } = req.body;  // Frontend sends phoneNumber
         
-        if (!phone_number) {
+        if (!phoneNumber) {
             return res.status(400).json({ error: 'Phone number is required' });
         }
 
@@ -22,7 +22,7 @@ router.post('/check-duplicate', async (req, res) => {
         let query = supabase
             .from('leads')
             .select('id, name, phone_number, created_at, user_id')
-            .eq('phone_number', phone_number);
+            .eq('phone_number', phoneNumber);
 
         // If not admin, only check current user's leads
         if (!req.user.isAdmin) {
@@ -121,41 +121,59 @@ router.post('/', validateLead, async (req, res) => {
     try {
         console.log('🔍 Creating new lead with data:', req.body);
         
-        const { name, phone_number, campaign_id, listed, ap, mv, repairs_needed, bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info } = req.body;
+        // Map frontend field names to database field names
+        const {
+            name,
+            phoneNumber,  // Frontend sends phoneNumber
+            campaign,     // Frontend sends campaign
+            listed,
+            ap,
+            mv,
+            repairsNeeded,  // Frontend sends repairsNeeded
+            bedrooms,
+            bathrooms,
+            condition,      // Frontend sends condition
+            occupancy,
+            reason,
+            closing,
+            address,
+            additionalInfo  // Frontend sends additionalInfo
+        } = req.body;
 
-        console.log('🔍 Extracted lead data:', {
-            name, phone_number, campaign_id, listed, ap, mv, repairs_needed, 
-            bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info
+        console.log('🔍 Mapped lead data:', {
+            name, phoneNumber, campaign, listed, ap, mv, repairsNeeded, 
+            bedrooms, bathrooms, condition, occupancy, reason, closing, address, additionalInfo
         });
 
         // Check for duplicate phone number
         const { data: duplicates } = await supabase
             .from('leads')
             .select('id, name, phone_number, created_at, user_id')
-            .eq('phone_number', phone_number);
+            .eq('phone_number', phoneNumber);
 
         let status = 'new';
         if (duplicates && duplicates.length > 0) {
             status = 'duplicate';
         }
 
+        // Map to database field names
         const leadData = {
             user_id: req.user.id,
             name,
-            phone_number,
-            campaign_id,
+            phone_number: phoneNumber,
+            campaign_id: campaign,
             listed,
             ap,
             mv,
-            repairs_needed,
+            repairs_needed: repairsNeeded,
             bedrooms,
             bathrooms,
-            condition_rating,
+            condition_rating: condition,
             occupancy,
             reason,
             closing,
             address,
-            additional_info,
+            additional_info: additionalInfo,
             status
         };
 
@@ -189,7 +207,26 @@ router.post('/', validateLead, async (req, res) => {
 router.put('/:id', validateLead, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, phone_number, campaign_id, ap, mv, repairs_needed, bedrooms, bathrooms, condition_rating, occupancy, reason, closing, address, additional_info, status } = req.body;
+        
+        // Map frontend field names to database field names
+        const {
+            name,
+            phoneNumber,  // Frontend sends phoneNumber
+            campaign,     // Frontend sends campaign
+            listed,
+            ap,
+            mv,
+            repairsNeeded,  // Frontend sends repairsNeeded
+            bedrooms,
+            bathrooms,
+            condition,      // Frontend sends condition
+            occupancy,
+            reason,
+            closing,
+            address,
+            additionalInfo,  // Frontend sends additionalInfo
+            status
+        } = req.body;
 
         // Verify lead belongs to user (unless admin)
         let query = supabase
@@ -207,21 +244,23 @@ router.put('/:id', validateLead, async (req, res) => {
             return res.status(404).json({ error: 'Lead not found' });
         }
 
+        // Map to database field names
         const updateData = {
             name,
-            phone_number,
-            campaign_id,
+            phone_number: phoneNumber,
+            campaign_id: campaign,
+            listed,
             ap,
             mv,
-            repairs_needed,
+            repairs_needed: repairsNeeded,
             bedrooms,
             bathrooms,
-            condition_rating,
+            condition_rating: condition,
             occupancy,
             reason,
             closing,
             address,
-            additional_info,
+            additional_info: additionalInfo,
             updated_at: new Date().toISOString()
         };
 

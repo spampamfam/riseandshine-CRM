@@ -4,6 +4,8 @@ const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log('🔍 Validation errors:', errors.array());
+        console.log('🔍 Request body:', req.body);
+        console.log('🔍 Validation failed for fields:', errors.array().map(e => e.path));
         return res.status(400).json({ 
             error: 'Validation failed', 
             details: errors.array() 
@@ -52,15 +54,15 @@ const validateLead = [
         .trim()
         .isLength({ min: 1, max: 255 })
         .withMessage('Name must be less than 255 characters'),
-    body('phone_number')
+    body('phoneNumber')  // Changed from phone_number to match frontend
         .optional()
         .trim()
         .isLength({ min: 1, max: 255 })
         .withMessage('Phone number must be less than 255 characters'),
-    body('campaign_id')
+    body('campaign')  // Changed from campaign_id to match frontend
         .optional()
         .isUUID()
-        .withMessage('Campaign ID must be a valid UUID'),
+        .withMessage('Campaign must be a valid UUID'),
     body('listed')
         .optional()
         .isIn(['listed_with_realtor', 'listed_by_owner', 'not_listed'])
@@ -73,20 +75,32 @@ const validateLead = [
         .optional()
         .isFloat({ min: 0 })
         .withMessage('MV must be a positive number'),
-    body('repairs_needed')
+    body('repairsNeeded')  // Changed from repairs_needed to match frontend
         .optional()
         .trim()
         .isLength({ max: 1000 })
         .withMessage('Repairs needed must be less than 1000 characters'),
     body('bedrooms')
         .optional()
-        .isInt({ min: 1, max: 10 })
-        .withMessage('Bedrooms must be between 1 and 10'),
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            const num = parseInt(value);
+            if (isNaN(num)) return false;
+            if (value === '6+') return true;  // Allow 6+ as valid
+            return num >= 1 && num <= 10;
+        })
+        .withMessage('Bedrooms must be between 1 and 10, or 6+'),
     body('bathrooms')
         .optional()
-        .isFloat({ min: 0.5, max: 10 })
-        .withMessage('Bathrooms must be between 0.5 and 10'),
-    body('condition_rating')
+        .custom((value) => {
+            if (value === '' || value === null || value === undefined) return true;
+            if (value === '4+') return true;  // Allow 4+ as valid
+            const num = parseFloat(value);
+            if (isNaN(num)) return false;
+            return num >= 0.5 && num <= 10;
+        })
+        .withMessage('Bathrooms must be between 0.5 and 10, or 4+'),
+    body('condition')  // Changed from condition_rating to match frontend
         .optional()
         .isInt({ min: 1, max: 10 })
         .withMessage('Condition rating must be between 1 and 10'),
@@ -109,7 +123,7 @@ const validateLead = [
         .trim()
         .isLength({ max: 500 })
         .withMessage('Address must be less than 500 characters'),
-    body('additional_info')
+    body('additionalInfo')  // Changed from additional_info to match frontend
         .optional()
         .trim()
         .isLength({ max: 1000 })
