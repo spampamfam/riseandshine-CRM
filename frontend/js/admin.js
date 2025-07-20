@@ -20,7 +20,7 @@ class AdminDashboard {
 
     async checkAuth() {
         try {
-            const response = await fetch('http://localhost:3000/api/auth/me', {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
                 credentials: 'include'
             });
             
@@ -98,7 +98,7 @@ class AdminDashboard {
 
     async loadStats() {
         try {
-            const response = await fetch('http://localhost:3000/api/admin/stats', {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/admin/stats', {
                 credentials: 'include'
             });
             

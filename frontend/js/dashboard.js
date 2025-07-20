@@ -21,7 +21,7 @@ class Dashboard {
 
     async checkAuth() {
         try {
-            const response = await fetch('http://localhost:3000/api/auth/me', {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
                 credentials: 'include'
             });
             
@@ -108,7 +108,7 @@ class Dashboard {
 
     async loadStats() {
         try {
-            const response = await fetch('http://localhost:3000/api/leads/stats', {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/leads/stats', {
                 credentials: 'include'
             });
             
@@ -350,7 +350,7 @@ class Dashboard {
 
     async exportLeads() {
         try {
-            const response = await fetch('http://localhost:3000/api/leads/export', {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/leads/export', {
                 credentials: 'include'
             });
 
