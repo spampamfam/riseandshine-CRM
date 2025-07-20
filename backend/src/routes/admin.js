@@ -186,11 +186,11 @@ router.put('/users/:userId/admin-status', authMiddleware, checkAdminStatus, asyn
         const { userId } = req.params;
         const { isAdmin } = req.body;
 
-        // Check if user exists
+        // Check if user exists in user_profiles
         const { data: user, error: userError } = await supabase
-            .from('auth.users')
-            .select('id, email')
-            .eq('id', userId)
+            .from('user_profiles')
+            .select('user_id, email')
+            .eq('user_id', userId)
             .single();
 
         if (userError || !user) {
@@ -448,6 +448,26 @@ router.get('/leads/:leadId', authMiddleware, checkAdminStatus, async (req, res) 
 });
 
 // Campaign management routes
+// Get campaigns for regular users (no admin required)
+router.get('/user-campaigns', authMiddleware, async (req, res) => {
+    try {
+        const { data: campaigns, error } = await supabase
+            .from('campaigns')
+            .select('id, name, description')
+            .order('name', { ascending: true });
+
+        if (error) {
+            return res.status(500).json({ error: 'Failed to fetch campaigns' });
+        }
+
+        res.json({ campaigns });
+    } catch (error) {
+        console.error('Get user campaigns error:', error);
+        res.status(500).json({ error: 'Failed to get campaigns' });
+    }
+});
+
+// Get campaigns for admin
 router.get('/campaigns', authMiddleware, checkAdminStatus, async (req, res) => {
     try {
         const { data, error } = await supabase

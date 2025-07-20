@@ -162,7 +162,6 @@ class Dashboard {
 
     updateStatsDisplay() {
         document.getElementById('totalLeads').textContent = this.stats.total || 0;
-        document.getElementById('totalQualifiedThisMonth').textContent = this.stats.total_qualified_this_month || 0;
         document.getElementById('qualifiedLeads').textContent = this.stats.qualified || 0;
         document.getElementById('disqualifiedLeads').textContent = this.stats.disqualified || 0;
         document.getElementById('callbackLeads').textContent = this.stats.callback || 0;
@@ -383,7 +382,7 @@ class Dashboard {
                 headers['Authorization'] = `Bearer ${localToken}`;
             }
 
-            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/admin/campaigns', {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/admin/user-campaigns', {
                 credentials: 'include',
                 headers
             });
@@ -502,11 +501,17 @@ class Dashboard {
             
             const method = leadId ? 'PUT' : 'POST';
 
+            const localToken = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify(leadData)
             });
@@ -538,11 +543,17 @@ class Dashboard {
 
     async checkForDuplicates(phoneNumber) {
         try {
+            const localToken = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/leads/check-duplicate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify({ phone_number: phoneNumber })
             });
