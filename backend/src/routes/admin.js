@@ -533,6 +533,28 @@ router.get('/campaigns', authMiddleware, checkAdminStatus, async (req, res) => {
     }
 });
 
+// Get individual campaign
+router.get('/campaigns/:campaignId', authMiddleware, checkAdminStatus, async (req, res) => {
+    try {
+        const { campaignId } = req.params;
+
+        const { data, error } = await supabase
+            .from('campaigns')
+            .select('*')
+            .eq('id', campaignId)
+            .single();
+
+        if (error) {
+            return res.status(404).json({ error: 'Campaign not found' });
+        }
+
+        res.json(data);
+    } catch (error) {
+        console.error('Get campaign error:', error);
+        res.status(500).json({ error: 'Failed to get campaign' });
+    }
+});
+
 router.post('/campaigns', authMiddleware, checkAdminStatus, async (req, res) => {
     try {
         const { name, description } = req.body;

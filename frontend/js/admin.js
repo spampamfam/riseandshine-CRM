@@ -113,26 +113,35 @@ class AdminPanel {
 
     async loadCampaigns() {
         try {
+            console.log('🔍 Loading campaigns...');
             const localToken = localStorage.getItem('authToken');
             const headers = {};
             if (localToken) {
                 headers['Authorization'] = `Bearer ${localToken}`;
             }
 
+            console.log('🔍 Campaigns API URL:', `${this.apiBaseUrl}/admin/campaigns`);
+            console.log('🔍 Campaigns headers:', headers);
+
             const response = await fetch(`${this.apiBaseUrl}/admin/campaigns`, {
                 credentials: 'include',
                 headers
             });
             
+            console.log('🔍 Campaigns response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 Campaigns data:', data);
                 this.renderCampaigns(data.campaigns);
             } else {
-                throw new Error('Failed to load campaigns');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('🔍 Campaigns response error:', errorData);
+                throw new Error(errorData.error || 'Failed to load campaigns');
             }
         } catch (error) {
             console.error('Failed to load campaigns:', error);
-            this.showNotification('Failed to load campaigns', 'error');
+            this.showNotification('Failed to load campaigns: ' + error.message, 'error');
         }
     }
 
@@ -165,27 +174,30 @@ class AdminPanel {
 
     async loadUsers() {
         try {
-            console.log('Loading users...');
+            console.log('🔍 Loading users...');
             const localToken = localStorage.getItem('authToken');
             const headers = {};
             if (localToken) {
                 headers['Authorization'] = `Bearer ${localToken}`;
             }
 
+            console.log('🔍 Users API URL:', `${this.apiBaseUrl}/admin/users`);
+            console.log('🔍 Users headers:', headers);
+
             const response = await fetch(`${this.apiBaseUrl}/admin/users`, {
                 credentials: 'include',
                 headers
             });
             
-            console.log('Users response status:', response.status);
+            console.log('🔍 Users response status:', response.status);
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('Users data:', data);
+                console.log('🔍 Users data:', data);
                 this.renderUsers(data.users);
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('Users response error:', errorData);
+                console.error('🔍 Users response error:', errorData);
                 throw new Error(errorData.error || 'Failed to load users');
             }
         } catch (error) {
@@ -258,6 +270,8 @@ class AdminPanel {
     async handleCampaignSubmit(e) {
         e.preventDefault();
         
+        console.log('🔍 Handling campaign submit...');
+        
         const formData = new FormData(e.target);
         const campaignId = formData.get('campaignId');
         
@@ -266,6 +280,9 @@ class AdminPanel {
             description: formData.get('description') || null
         };
 
+        console.log('🔍 Campaign data:', campaignData);
+        console.log('🔍 Campaign ID:', campaignId);
+
         try {
             const url = campaignId ? 
                 `${this.apiBaseUrl}/admin/campaigns/${campaignId}` : 
@@ -273,14 +290,25 @@ class AdminPanel {
             
             const method = campaignId ? 'PUT' : 'POST';
             
+            console.log('🔍 Campaign API URL:', url);
+            console.log('🔍 Campaign method:', method);
+
+            const localToken = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify(campaignData)
             });
+
+            console.log('🔍 Campaign response status:', response.status);
 
             if (response.ok) {
                 this.showNotification(`Campaign ${campaignId ? 'updated' : 'created'} successfully!`, 'success');
@@ -288,6 +316,7 @@ class AdminPanel {
                 this.loadCampaigns();
             } else {
                 const data = await response.json();
+                console.error('🔍 Campaign response error:', data);
                 throw new Error(data.error || 'Failed to save campaign');
             }
         } catch (error) {
@@ -298,20 +327,31 @@ class AdminPanel {
 
     async toggleAdminStatus(userId, makeAdmin) {
         try {
+            console.log('🔍 Toggling admin status for user:', userId, 'makeAdmin:', makeAdmin);
+            
+            const localToken = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/admin/users/${userId}/admin-status`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify({ isAdmin: makeAdmin })
             });
+
+            console.log('🔍 Admin status response:', response.status);
 
             if (response.ok) {
                 this.showNotification(`User ${makeAdmin ? 'promoted to admin' : 'removed from admin'} successfully!`, 'success');
                 this.loadUsers();
             } else {
                 const data = await response.json();
+                console.error('🔍 Admin status error:', data);
                 throw new Error(data.error || 'Failed to update admin status');
             }
         } catch (error) {
@@ -322,13 +362,28 @@ class AdminPanel {
 
     async loadCampaignData(campaignId) {
         try {
+            console.log('🔍 Loading campaign data for ID:', campaignId);
+            
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/admin/campaigns/${campaignId}`, {
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
+            
+            console.log('🔍 Campaign data response:', response.status);
             
             if (response.ok) {
                 const campaign = await response.json();
+                console.log('🔍 Campaign data:', campaign);
                 this.populateCampaignForm(campaign);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('🔍 Campaign data error:', errorData);
             }
         } catch (error) {
             console.error('Failed to load campaign data:', error);
@@ -351,16 +406,28 @@ class AdminPanel {
         }
 
         try {
+            console.log('🔍 Deleting campaign ID:', campaignId);
+            
+            const localToken = localStorage.getItem('authToken');
+            const headers = {};
+            if (localToken) {
+                headers['Authorization'] = `Bearer ${localToken}`;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/admin/campaigns/${campaignId}`, {
                 method: 'DELETE',
-                credentials: 'include'
+                credentials: 'include',
+                headers
             });
+
+            console.log('🔍 Campaign delete response:', response.status);
 
             if (response.ok) {
                 this.showNotification('Campaign deleted successfully!', 'success');
                 this.loadCampaigns();
             } else {
                 const data = await response.json();
+                console.error('🔍 Campaign delete error:', data);
                 throw new Error(data.error || 'Failed to delete campaign');
             }
         } catch (error) {
