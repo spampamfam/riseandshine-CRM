@@ -97,6 +97,8 @@
                 const rememberMe = formData.get('rememberMe') === 'on';
                 
                 try {
+                    console.log('🔐 Attempting login for:', email);
+                    
                     // Add timeout to prevent hanging
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -117,9 +119,13 @@
                     
                     clearTimeout(timeoutId);
                     
+                    console.log('🔐 Login response status:', response.status);
+                    console.log('🔐 Login response headers:', response.headers);
+                    
                     const data = await response.json();
                     
                     if (response.ok) {
+                        console.log('🔐 Login successful, cookies after login:', document.cookie);
                         // Redirect to dashboard immediately
                         window.location.href = 'dashboard.html';
                     } else {
