@@ -3,149 +3,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lightweight CRM - Manage Your Leads</title>
+    <title>CRM Pro - Sign In</title>
     <link rel="stylesheet" href="assets/styles.css">
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .auth-card {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 0.25rem;
+            position: relative;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-tab.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+        }
+
+        .form-button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .form-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-button:active {
+            transform: translateY(0);
+        }
+
+        .auth-divider {
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .auth-divider span {
+            background: var(--bg-primary);
+            padding: 0 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .social-button {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .social-button:hover {
+            border-color: var(--primary-color);
+            background: var(--bg-hover);
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .error-message {
+            background: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message {
+            background: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 1rem;
+            }
+            
+            .auth-card {
+                padding: 2rem;
+            }
+            
+            .auth-logo {
+                font-size: 2.5rem;
+            }
+            
+            .auth-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <nav class="nav">
-                <div class="nav-brand">
-                    <h1>📊 CRM Pro</h1>
+    <div class="auth-container">
+        <div class="auth-background"></div>
+        
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle">
+            <span class="theme-icon">🌙</span>
+        </button>
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">📊</div>
+                <h1 class="auth-title">CRM Pro</h1>
+                <p class="auth-subtitle">Manage your leads like a pro</p>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">Sign In</div>
+                <div class="auth-tab" data-tab="register">Sign Up</div>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active">
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="Enter your email" required>
                 </div>
-                <div class="nav-menu">
-                    <button class="theme-toggle" id="themeToggle">
-                        <span class="theme-icon">🌙</span>
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="form-button">Sign In</button>
+                
+                <div class="auth-divider">
+                    <span>or continue with</span>
+                </div>
+                
+                <div class="social-login">
+                    <button type="button" class="social-button">
+                        <span>🔍</span>
+                        <span>Google</span>
                     </button>
-                    <a href="pages/login.html" class="btn btn-primary">Login</a>
-                    <a href="pages/register.html" class="btn btn-secondary">Sign Up</a>
+                    <button type="button" class="social-button">
+                        <span>📘</span>
+                        <span>GitHub</span>
+                    </button>
                 </div>
-            </nav>
-        </header>
+            </form>
 
-        <main class="main">
-            <section class="hero">
-                <div class="hero-content">
-                    <h1 class="hero-title">Manage Your Leads Like a Pro</h1>
-                    <p class="hero-subtitle">
-                        A lightweight, powerful CRM system built for modern businesses. 
-                        Track leads, manage contacts, and grow your business with ease.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="pages/register.html" class="btn btn-primary btn-large">Get Started Free</a>
-                        <a href="#features" class="btn btn-outline btn-large">Learn More</a>
-                    </div>
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label" for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="Enter your email" required>
                 </div>
-                <div class="hero-image">
-                    <div class="dashboard-preview">
-                        <div class="preview-header">
-                            <div class="preview-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-                        <div class="preview-content">
-                            <div class="preview-card">
-                                <h3>📈 Lead Management</h3>
-                                <p>Track and organize your leads efficiently</p>
-                            </div>
-                            <div class="preview-card">
-                                <h3>📊 Analytics</h3>
-                                <p>Get insights into your sales pipeline</p>
-                            </div>
-                            <div class="preview-card">
-                                <h3>🔒 Secure</h3>
-                                <p>Enterprise-grade security for your data</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Create a password" required>
                 </div>
-            </section>
-
-            <section id="features" class="features">
-                <h2 class="section-title">Why Choose Our CRM?</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">🚀</div>
-                        <h3>Lightning Fast</h3>
-                        <p>Built with modern technologies for optimal performance and speed.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h3>Responsive Design</h3>
-                        <p>Works perfectly on desktop, tablet, and mobile devices.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔒</div>
-                        <h3>Secure & Private</h3>
-                        <p>Your data is protected with enterprise-grade security measures.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3>Real-time Analytics</h3>
-                        <p>Get instant insights into your lead pipeline and performance.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">💾</div>
-                        <h3>Data Export</h3>
-                        <p>Export your leads to CSV format for backup and analysis.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">⚡</div>
-                        <h3>Easy Setup</h3>
-                        <p>Get started in minutes with our simple onboarding process.</p>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
                 </div>
-            </section>
-
-            <section class="cta">
-                <div class="cta-content">
-                    <h2>Ready to Transform Your Lead Management?</h2>
-                    <p>Join thousands of businesses that trust our CRM to grow their sales.</p>
-                    <a href="pages/register.html" class="btn btn-primary btn-large">Start Your Free Trial</a>
+                <button type="submit" class="form-button">Create Account</button>
+                
+                <div class="auth-divider">
+                    <span>or continue with</span>
                 </div>
-            </section>
-        </main>
-
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>📊 CRM Pro</h3>
-                    <p>Modern lead management for growing businesses.</p>
+                
+                <div class="social-login">
+                    <button type="button" class="social-button">
+                        <span>🔍</span>
+                        <span>Google</span>
+                    </button>
+                    <button type="button" class="social-button">
+                        <span>📘</span>
+                        <span>GitHub</span>
+                    </button>
                 </div>
-                <div class="footer-section">
-                    <h4>Product</h4>
-                    <ul>
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="pages/login.html">Login</a></li>
-                        <li><a href="pages/register.html">Sign Up</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#help">Help Center</a></li>
-                        <li><a href="#contact">Contact</a></li>
-                        <li><a href="#docs">Documentation</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#privacy">Privacy Policy</a></li>
-                        <li><a href="#terms">Terms of Service</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 CRM Pro. All rights reserved.</p>
-            </div>
-        </footer>
+            </form>
+        </div>
     </div>
 
     <script src="js/theme.js"></script>
-    <script src="js/main.js"></script>
+    <script>
+        class AuthManager {
+            constructor() {
+                this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
+                this.init();
+            }
+
+            init() {
+                this.setupTabSwitching();
+                this.setupFormHandlers();
+                this.checkAuthStatus();
+            }
+
+            setupTabSwitching() {
+                const tabs = document.querySelectorAll('.auth-tab');
+                const forms = document.querySelectorAll('.auth-form');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTab = tab.dataset.tab;
+                        
+                        // Update active tab
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        
+                        // Update active form
+                        forms.forEach(form => {
+                            form.classList.remove('active');
+                            if (form.id === `${targetTab}Form`) {
+                                form.classList.add('active');
+                            }
+                        });
+                        
+                        // Clear messages
+                        this.clearMessages();
+                    });
+                });
+            }
+
+            setupFormHandlers() {
+                // Login form
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+
+                // Register form
+                document.getElementById('registerForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleRegister();
+                });
+            }
+
+            async handleLogin() {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        this.showMessage('Login successful! Redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'pages/dashboard.html';
+                        }, 1000);
+                    } else {
+                        this.showMessage(data.error || 'Login failed', 'error');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showMessage('Network error. Please try again.', 'error');
+                }
+            }
+
+            async handleRegister() {
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (password !== confirmPassword) {
+                    this.showMessage('Passwords do not match', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        this.showMessage('Account created successfully! Please sign in.', 'success');
+                        // Switch to login tab
+                        document.querySelector('[data-tab="login"]').click();
+                        document.getElementById('loginForm').reset();
+                    } else {
+                        this.showMessage(data.error || 'Registration failed', 'error');
+                    }
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    this.showMessage('Network error. Please try again.', 'error');
+                }
+            }
+
+            async checkAuthStatus() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        // User is already logged in, redirect to dashboard
+                        window.location.href = 'pages/dashboard.html';
+                    }
+                } catch (error) {
+                    // User is not logged in, stay on auth page
+                }
+            }
+
+            showMessage(message, type) {
+                const errorDiv = document.getElementById('errorMessage');
+                const successDiv = document.getElementById('successMessage');
+                
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+                
+                if (type === 'error') {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.textContent = message;
+                    successDiv.style.display = 'block';
+                }
+            }
+
+            clearMessages() {
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'none';
+            }
+        }
+
+        // Initialize auth manager when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.authManager = new AuthManager();
+        });
+    </script>
 </body>
 </html> 

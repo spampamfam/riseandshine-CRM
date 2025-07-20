@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Management - CRM Pro</title>
+    <link rel="stylesheet" href="../assets/styles.css">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <style>
+        .admin-management {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .admin-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .users-table {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            font-weight: bold;
+        }
+
+        .user-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        .user-row:last-child {
+            border-bottom: none;
+        }
+
+        .user-row:hover {
+            background: var(--bg-hover);
+        }
+
+        .admin-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .admin-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .admin-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .admin-badge.admin {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .admin-badge.user {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .bulk-actions {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .select-all {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bulk-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .user-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .success {
+            background: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <nav class="nav">
+                <div class="nav-brand">
+                    <h1>📊 CRM Pro - Admin Management</h1>
+                </div>
+                <div class="nav-menu">
+                    <button class="theme-toggle" id="themeToggle">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <a href="dashboard.html" class="btn btn-secondary" style="margin-right: 1rem;">Dashboard</a>
+                    <a href="admin.html" class="btn btn-secondary" style="margin-right: 1rem;">Admin Panel</a>
+                    <span id="userEmail" style="color: var(--text-secondary); margin-right: 1rem;"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                </div>
+            </nav>
+        </header>
+
+        <main class="main">
+            <div class="admin-management">
+                <div class="admin-header">
+                    <h1 class="admin-title">👑 Admin Management</h1>
+                    <div class="admin-actions">
+                        <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+                        <button id="saveAllBtn" class="btn btn-success">Save All Changes</button>
+                    </div>
+                </div>
+
+                <div id="notification" style="display: none;"></div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalUsers">-</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalAdmins">-</div>
+                        <div class="stat-label">Admin Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalLeads">-</div>
+                        <div class="stat-label">Total Leads</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="recentUsers">-</div>
+                        <div class="stat-label">New Users (7d)</div>
+                    </div>
+                </div>
+
+                <div class="bulk-actions">
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAll" class="user-checkbox">
+                        <label for="selectAll">Select All</label>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button id="makeAdminBtn" class="btn btn-primary" disabled>Make Admin</button>
+                        <button id="removeAdminBtn" class="btn btn-secondary" disabled>Remove Admin</button>
+                    </div>
+                </div>
+
+                <div class="users-table">
+                    <div class="table-header">
+                        <div>Email</div>
+                        <div>Joined</div>
+                        <div>Status</div>
+                        <div>Admin Access</div>
+                    </div>
+                    <div id="usersList">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        class AdminManagement {
+            constructor() {
+                this.users = [];
+                this.changes = new Map();
+                this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
+                this.init();
+            }
+
+            async init() {
+                await this.checkAuth();
+                this.setupEventListeners();
+                await this.loadUsers();
+                await this.loadStats();
+            }
+
+            async checkAuth() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    this.currentUser = data.user;
+                    
+                    // Check admin status
+                    const adminResponse = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!adminResponse.ok || !(await adminResponse.json()).isAdmin) {
+                        this.showNotification('Access denied. Admin privileges required.', 'error');
+                        window.location.href = 'dashboard.html';
+                        return;
+                    }
+                    
+                    // Update user email display
+                    const userEmail = document.getElementById('userEmail');
+                    if (userEmail) {
+                        userEmail.textContent = this.currentUser.email;
+                    }
+                } catch (error) {
+                    console.error('Auth check failed:', error);
+                    window.location.href = 'login.html';
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadUsers();
+                    this.loadStats();
+                });
+
+                document.getElementById('saveAllBtn').addEventListener('click', () => {
+                    this.saveAllChanges();
+                });
+
+                document.getElementById('selectAll').addEventListener('change', (e) => {
+                    this.toggleSelectAll(e.target.checked);
+                });
+
+                document.getElementById('makeAdminBtn').addEventListener('click', () => {
+                    this.bulkUpdateAdmin(true);
+                });
+
+                document.getElementById('removeAdminBtn').addEventListener('click', () => {
+                    this.bulkUpdateAdmin(false);
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+            }
+
+            async loadUsers() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/users-with-admin-status`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to load users');
+                    }
+                    
+                    const data = await response.json();
+                    this.users = data.users;
+                    this.renderUsers();
+                } catch (error) {
+                    console.error('Failed to load users:', error);
+                    this.showNotification('Failed to load users', 'error');
+                }
+            }
+
+            async loadStats() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/stats`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to load stats');
+                    }
+                    
+                    const data = await response.json();
+                    this.updateStats(data.stats);
+                } catch (error) {
+                    console.error('Failed to load stats:', error);
+                }
+            }
+
+            updateStats(stats) {
+                document.getElementById('totalUsers').textContent = stats.total_users || 0;
+                document.getElementById('totalLeads').textContent = stats.total_leads || 0;
+                document.getElementById('recentUsers').textContent = stats.recent_users || 0;
+                
+                // Count admins
+                const adminCount = this.users.filter(user => user.isAdmin).length;
+                document.getElementById('totalAdmins').textContent = adminCount;
+            }
+
+            renderUsers() {
+                const usersList = document.getElementById('usersList');
+                
+                if (this.users.length === 0) {
+                    usersList.innerHTML = '<div class="loading">No users found</div>';
+                    return;
+                }
+
+                usersList.innerHTML = this.users.map(user => `
+                    <div class="user-row">
+                        <div>
+                            <input type="checkbox" class="user-checkbox" data-user-id="${user.id}">
+                            ${user.email}
+                        </div>
+                        <div>${new Date(user.created_at).toLocaleDateString()}</div>
+                        <div>
+                            <span class="admin-badge ${user.isAdmin ? 'admin' : 'user'}">
+                                ${user.isAdmin ? 'Admin' : 'User'}
+                            </span>
+                        </div>
+                        <div>
+                            <label class="admin-toggle">
+                                <input type="checkbox" 
+                                       ${user.isAdmin ? 'checked' : ''} 
+                                       ${user.id === this.currentUser.id ? 'disabled' : ''}
+                                       data-user-id="${user.id}">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners to toggles
+                usersList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox.dataset.userId) {
+                        checkbox.addEventListener('change', (e) => {
+                            this.handleToggleChange(e.target);
+                        });
+                    }
+                });
+            }
+
+            handleToggleChange(toggle) {
+                const userId = toggle.dataset.userId;
+                const isAdmin = toggle.checked;
+                
+                this.changes.set(userId, isAdmin);
+                this.updateBulkButtons();
+            }
+
+            toggleSelectAll(checked) {
+                const checkboxes = document.querySelectorAll('.user-checkbox[data-user-id]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = checked;
+                });
+                this.updateBulkButtons();
+            }
+
+            updateBulkButtons() {
+                const selectedUsers = document.querySelectorAll('.user-checkbox[data-user-id]:checked');
+                const makeAdminBtn = document.getElementById('makeAdminBtn');
+                const removeAdminBtn = document.getElementById('removeAdminBtn');
+                
+                makeAdminBtn.disabled = selectedUsers.length === 0;
+                removeAdminBtn.disabled = selectedUsers.length === 0;
+            }
+
+            async bulkUpdateAdmin(isAdmin) {
+                const selectedUsers = document.querySelectorAll('.user-checkbox[data-user-id]:checked');
+                const updates = Array.from(selectedUsers).map(checkbox => ({
+                    userId: checkbox.dataset.userId,
+                    isAdmin: isAdmin
+                }));
+
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/bulk-update-admin`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ updates })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to update admin status');
+                    }
+
+                    const data = await response.json();
+                    this.showNotification(`Updated ${updates.length} users`, 'success');
+                    
+                    // Refresh the user list
+                    await this.loadUsers();
+                    this.changes.clear();
+                    this.updateBulkButtons();
+                } catch (error) {
+                    console.error('Bulk update failed:', error);
+                    this.showNotification('Failed to update admin status', 'error');
+                }
+            }
+
+            async saveAllChanges() {
+                if (this.changes.size === 0) {
+                    this.showNotification('No changes to save', 'info');
+                    return;
+                }
+
+                try {
+                    const updates = Array.from(this.changes.entries()).map(([userId, isAdmin]) => ({
+                        userId,
+                        isAdmin
+                    }));
+
+                    const response = await fetch(`${this.apiBaseUrl}/admin/bulk-update-admin`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ updates })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to save changes');
+                    }
+
+                    const data = await response.json();
+                    this.showNotification(`Saved ${this.changes.size} changes`, 'success');
+                    
+                    // Refresh the user list
+                    await this.loadUsers();
+                    this.changes.clear();
+                    this.updateBulkButtons();
+                } catch (error) {
+                    console.error('Save changes failed:', error);
+                    this.showNotification('Failed to save changes', 'error');
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = type;
+                notification.style.display = 'block';
+                
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 5000);
+            }
+
+            async logout() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/logout`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        window.location.href = '../index.html';
+                    }
+                } catch (error) {
+                    console.error('Logout failed:', error);
+                    window.location.href = '../index.html';
+                }
+            }
+        }
+
+        // Initialize admin management when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.adminManagement = new AdminManagement();
+        });
+    </script>
+</body>
+</html> 

@@ -3,22 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - CRM Pro</title>
+    <title>Admin Panel - CRM Pro</title>
     <link rel="stylesheet" href="../assets/styles.css">
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <style>
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 0.25rem;
+        }
+
+        .admin-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .admin-tab.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .admin-content {
+            display: none;
+        }
+
+        .admin-content.active {
+            display: block;
+        }
+
+        .form-builder {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .field-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .field-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .field-info {
+            flex: 1;
+        }
+
+        .field-name {
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .field-type {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .field-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .campaign-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .campaign-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .campaign-info {
+            flex: 1;
+        }
+
+        .campaign-name {
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .campaign-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .modal-content {
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header class="header">
             <nav class="nav">
                 <div class="nav-brand">
-                    <h1>📊 CRM Pro - Admin</h1>
+                    <h1>👑 Admin Panel</h1>
                 </div>
                 <div class="nav-menu">
                     <button class="theme-toggle" id="themeToggle">
                         <span class="theme-icon">🌙</span>
                     </button>
-                    <a href="dashboard.html" class="btn btn-secondary" style="margin-right: 1rem;">User Dashboard</a>
+                    <a href="dashboard.html" class="btn btn-secondary" style="margin-right: 1rem;">Dashboard</a>
+                    <a href="admin-management.html" class="btn btn-secondary" style="margin-right: 1rem;">Manage Admins</a>
                     <span id="userEmail" style="color: var(--text-secondary); margin-right: 1rem;"></span>
                     <button id="logoutBtn" class="btn btn-secondary">Logout</button>
                 </div>
@@ -26,124 +151,937 @@
         </header>
 
         <main class="main">
-            <div class="dashboard">
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">Admin Dashboard</h1>
-                    <div class="dashboard-actions">
-                        <button id="refreshBtn" class="btn btn-primary">Refresh Data</button>
-                    </div>
+            <div class="admin-panel">
+                <div class="admin-header">
+                    <h1 class="admin-title">System Administration</h1>
                 </div>
 
-                <!-- System Statistics -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalUsers">0</div>
-                        <div class="stat-label">Total Users</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalLeads">0</div>
-                        <div class="stat-label">Total Leads</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="newLeads">0</div>
-                        <div class="stat-label">New Leads</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="contactedLeads">0</div>
-                        <div class="stat-label">Contacted</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="qualifiedLeads">0</div>
-                        <div class="stat-label">Qualified</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="convertedLeads">0</div>
-                        <div class="stat-label">Converted</div>
-                    </div>
+                <div id="notification" style="display: none;"></div>
+
+                <!-- Admin Tabs -->
+                <div class="admin-tabs">
+                    <div class="admin-tab active" data-tab="overview">Overview</div>
+                    <div class="admin-tab" data-tab="all-leads">All Leads</div>
+                    <div class="admin-tab" data-tab="campaigns">Campaigns</div>
+                    <div class="admin-tab" data-tab="form-builder">Form Builder</div>
+                    <div class="admin-tab" data-tab="users">User Management</div>
                 </div>
 
-                <!-- Recent Activity -->
-                <div class="stats-grid" style="margin-top: 2rem;">
-                    <div class="stat-card">
-                        <div class="stat-number" id="recentUsers">0</div>
-                        <div class="stat-label">New Users (30 days)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="recentLeads">0</div>
-                        <div class="stat-label">New Leads (30 days)</div>
-                    </div>
-                </div>
-
-                <!-- Users Table -->
-                <div class="leads-table" style="margin-top: 2rem;">
-                    <div class="table-header">
-                        <h2 class="table-title">All Users</h2>
-                        <div class="table-actions">
-                            <input 
-                                type="text" 
-                                id="userSearchInput" 
-                                placeholder="Search users..." 
-                                class="form-input"
-                                style="width: 200px;"
-                            >
+                <!-- Overview Content -->
+                <div id="overview" class="admin-content active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalUsers">-</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalLeads">-</div>
+                            <div class="stat-label">Total Leads</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalCampaigns">-</div>
+                            <div class="stat-label">Active Campaigns</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="recentLeads">-</div>
+                            <div class="stat-label">Leads (7d)</div>
                         </div>
                     </div>
 
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Email</th>
-                                    <th>Lead Count</th>
-                                    <th>Joined</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <!-- Users will be populated here -->
-                            </tbody>
-                        </table>
+                    <div class="leads-table">
+                        <div class="table-header">
+                            <h2 class="table-title">Recent Leads</h2>
+                        </div>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Contact</th>
+                                        <th>Campaign</th>
+                                        <th>Status</th>
+                                        <th>User</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentLeadsTableBody">
+                                    <!-- Recent leads will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Leads Content -->
+                <div id="all-leads" class="admin-content">
+                    <div class="leads-table">
+                        <div class="table-header">
+                            <h2 class="table-title">All System Leads</h2>
+                            <div class="table-actions">
+                                <input 
+                                    type="text" 
+                                    id="allLeadsSearch" 
+                                    placeholder="Search leads..." 
+                                    class="form-input"
+                                    style="width: 200px; margin-right: 1rem;"
+                                >
+                                <select id="allLeadsStatusFilter" class="form-input" style="width: 150px; margin-right: 1rem;">
+                                    <option value="">All Status</option>
+                                    <option value="new">New</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="qualified">Qualified</option>
+                                    <option value="converted">Converted</option>
+                                </select>
+                                <select id="allLeadsUserFilter" class="form-input" style="width: 150px;">
+                                    <option value="">All Users</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Campaign</th>
+                                        <th>AP/MV</th>
+                                        <th>Property</th>
+                                        <th>Status</th>
+                                        <th>User</th>
+                                        <th>Created</th>
+                                        <th>Admin Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allLeadsTableBody">
+                                    <!-- All leads will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaigns Content -->
+                <div id="campaigns" class="admin-content">
+                    <div class="section-header">
+                        <h2>Campaign Management</h2>
+                        <button id="addCampaignBtn" class="btn btn-primary">+ Add Campaign</button>
                     </div>
 
-                    <!-- Pagination -->
-                    <div class="pagination" id="userPagination" style="padding: 1rem; text-align: center;">
-                        <!-- Pagination will be populated here -->
+                    <div class="campaign-list" id="campaignList">
+                        <!-- Campaigns will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Form Builder Content -->
+                <div id="form-builder" class="admin-content">
+                    <div class="section-header">
+                        <h2>Form Builder</h2>
+                        <button id="addFieldBtn" class="btn btn-primary">+ Add Field</button>
+                    </div>
+
+                    <div class="form-builder">
+                        <h3>Current Form Structure</h3>
+                        <div class="field-list" id="fieldList">
+                            <!-- Form fields will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Content -->
+                <div id="users" class="admin-content">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                    </div>
+
+                    <div class="users-table">
+                        <div class="table-header">
+                            <h2 class="table-title">All Users</h2>
+                        </div>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Admin Status</th>
+                                        <th>Leads Count</th>
+                                        <th>Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- User Details Modal -->
-    <div id="userModal" class="modal hidden">
+    <!-- Campaign Modal -->
+    <div id="campaignModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="userModalTitle">User Details</h2>
-                <button class="modal-close" id="closeUserModal">&times;</button>
+                <h2 class="modal-title" id="campaignModalTitle">Add Campaign</h2>
+                <button class="modal-close" id="closeCampaignModal">&times;</button>
             </div>
-            <div id="userModalContent">
-                <!-- User details will be populated here -->
+            <form id="campaignForm">
+                <input type="hidden" id="campaignId" name="campaignId">
+                <div class="form-group">
+                    <label for="campaignName" class="form-label">Campaign Name *</label>
+                    <input type="text" id="campaignName" name="name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="campaignDescription" class="form-label">Description</label>
+                    <textarea id="campaignDescription" name="description" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Campaign</button>
+                    <button type="button" class="btn btn-secondary" id="cancelCampaignModal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Field Modal -->
+    <div id="fieldModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="fieldModalTitle">Add Field</h2>
+                <button class="modal-close" id="closeFieldModal">&times;</button>
+            </div>
+            <form id="fieldForm">
+                <input type="hidden" id="fieldId" name="fieldId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fieldName" class="form-label">Field Name *</label>
+                        <input type="text" id="fieldName" name="fieldName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fieldType" class="form-label">Field Type *</label>
+                        <select id="fieldType" name="fieldType" class="form-input" required>
+                            <option value="">Select Type</option>
+                            <option value="text">Text</option>
+                            <option value="textarea">Text Area</option>
+                            <option value="select">Select</option>
+                            <option value="number">Number</option>
+                            <option value="email">Email</option>
+                            <option value="tel">Phone</option>
+                            <option value="date">Date</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fieldLabel" class="form-label">Field Label *</label>
+                    <input type="text" id="fieldLabel" name="fieldLabel" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="fieldPlaceholder" class="form-label">Placeholder</label>
+                    <input type="text" id="fieldPlaceholder" name="fieldPlaceholder" class="form-input">
+                </div>
+                <div class="form-group" id="fieldOptionsGroup" style="display: none;">
+                    <label for="fieldOptions" class="form-label">Options (one per line)</label>
+                    <textarea id="fieldOptions" name="fieldOptions" class="form-input" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="fieldRequired" name="fieldRequired"> Required Field
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Field</button>
+                    <button type="button" class="btn btn-secondary" id="cancelFieldModal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lead Detail Modal -->
+    <div id="leadDetailModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 class="modal-title">Lead Details</h2>
+                <button class="modal-close" id="closeLeadDetailModal">&times;</button>
+            </div>
+            <div id="leadDetailContent">
+                <!-- Lead details will be populated here -->
             </div>
         </div>
     </div>
 
-    <!-- Delete User Modal -->
-    <div id="deleteUserModal" class="modal hidden">
+    <!-- Admin Status Update Modal -->
+    <div id="adminStatusModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Confirm Delete User</h2>
-                <button class="modal-close" id="closeDeleteUserModal">&times;</button>
+                <h2 class="modal-title">Update Lead Status</h2>
+                <button class="modal-close" id="closeAdminStatusModal">&times;</button>
             </div>
-            <p style="margin-bottom: 1.5rem;">Are you sure you want to delete this user? This will also delete all their leads. This action cannot be undone.</p>
-            <div class="form-actions" style="display: flex; gap: 1rem;">
-                <button id="confirmDeleteUser" class="btn btn-danger">Delete User</button>
-                <button id="cancelDeleteUser" class="btn btn-secondary">Cancel</button>
+            <form id="adminStatusForm">
+                <input type="hidden" id="adminLeadId" name="leadId">
+                <div class="form-group">
+                    <label for="adminStatus" class="form-label">Status *</label>
+                    <select id="adminStatus" name="status" class="form-input" required>
+                        <option value="">Select Status</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="disqualified">Disqualified</option>
+                        <option value="callback">Callback</option>
+                        <option value="inventory">Inventory</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="converted">Converted</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="adminNote" class="form-label">Admin Note</label>
+                    <textarea id="adminNote" name="note" class="form-input" rows="4" placeholder="Add a note about this status change..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                    <button type="button" class="btn btn-secondary" id="cancelAdminStatusModal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lead Notes Modal -->
+    <div id="leadNotesModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Lead Notes</h2>
+                <button class="modal-close" id="closeLeadNotesModal">&times;</button>
             </div>
+            <div id="leadNotesContent">
+                <!-- Notes will be populated here -->
+            </div>
+            <form id="addNoteForm" style="margin-top: 1rem;">
+                <input type="hidden" id="noteLeadId" name="leadId">
+                <div class="form-group">
+                    <label for="newNote" class="form-label">Add Note</label>
+                    <textarea id="newNote" name="note" class="form-input" rows="3" placeholder="Add a new note..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Note</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script src="../js/theme.js"></script>
     <script src="../js/main.js"></script>
-    <script src="../js/admin.js"></script>
+    <script>
+        class AdminPanel {
+            constructor() {
+                this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
+                this.init();
+            }
+
+            async init() {
+                await this.checkAuth();
+                this.setupEventListeners();
+                this.loadOverview();
+            }
+
+            async checkAuth() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    this.currentUser = data.user;
+                    
+                    // Check admin status
+                    const adminResponse = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!adminResponse.ok || !(await adminResponse.json()).isAdmin) {
+                        this.showNotification('Access denied. Admin privileges required.', 'error');
+                        window.location.href = 'dashboard.html';
+                        return;
+                    }
+                    
+                    // Update user email display
+                    const userEmail = document.getElementById('userEmail');
+                    if (userEmail) {
+                        userEmail.textContent = this.currentUser.email;
+                    }
+                } catch (error) {
+                    console.error('Auth check failed:', error);
+                    window.location.href = 'login.html';
+                }
+            }
+
+            setupEventListeners() {
+                // Tab switching
+                document.querySelectorAll('.admin-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTab = tab.dataset.tab;
+                        this.switchTab(targetTab);
+                    });
+                });
+
+                // Campaign management
+                document.getElementById('addCampaignBtn').addEventListener('click', () => {
+                    this.openCampaignModal();
+                });
+
+                document.getElementById('campaignForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveCampaign();
+                });
+
+                // Field management
+                document.getElementById('addFieldBtn').addEventListener('click', () => {
+                    this.openFieldModal();
+                });
+
+                document.getElementById('fieldForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveField();
+                });
+
+                // Field type change
+                document.getElementById('fieldType').addEventListener('change', (e) => {
+                    const optionsGroup = document.getElementById('fieldOptionsGroup');
+                    if (e.target.value === 'select') {
+                        optionsGroup.style.display = 'block';
+                    } else {
+                        optionsGroup.style.display = 'none';
+                    }
+                });
+
+                // Modal close buttons
+                document.getElementById('closeCampaignModal').addEventListener('click', () => {
+                    this.closeCampaignModal();
+                });
+
+                document.getElementById('closeFieldModal').addEventListener('click', () => {
+                    this.closeFieldModal();
+                });
+
+                document.getElementById('closeLeadDetailModal').addEventListener('click', () => {
+                    this.closeLeadDetailModal();
+                });
+
+                // Logout
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+            }
+
+            switchTab(tabName) {
+                // Update active tab
+                document.querySelectorAll('.admin-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                // Update active content
+                document.querySelectorAll('.admin-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName).classList.add('active');
+
+                // Load content based on tab
+                switch(tabName) {
+                    case 'overview':
+                        this.loadOverview();
+                        break;
+                    case 'all-leads':
+                        this.loadAllLeads();
+                        break;
+                    case 'campaigns':
+                        this.loadCampaigns();
+                        break;
+                    case 'form-builder':
+                        this.loadFormBuilder();
+                        break;
+                    case 'users':
+                        this.loadUsers();
+                        break;
+                }
+            }
+
+            async loadOverview() {
+                try {
+                    const [statsResponse, recentLeadsResponse] = await Promise.all([
+                        fetch(`${this.apiBaseUrl}/admin/stats`, { credentials: 'include' }),
+                        fetch(`${this.apiBaseUrl}/admin/recent-leads`, { credentials: 'include' })
+                    ]);
+
+                    if (statsResponse.ok) {
+                        const stats = await statsResponse.json();
+                        this.updateOverviewStats(stats.stats);
+                    }
+
+                    if (recentLeadsResponse.ok) {
+                        const recentLeads = await recentLeadsResponse.json();
+                        this.renderRecentLeads(recentLeads.leads);
+                    }
+                } catch (error) {
+                    console.error('Failed to load overview:', error);
+                }
+            }
+
+            async loadAllLeads() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/all-leads`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.renderAllLeads(data.leads);
+                    }
+                } catch (error) {
+                    console.error('Failed to load all leads:', error);
+                }
+            }
+
+            async loadCampaigns() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/campaigns`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.renderCampaigns(data.campaigns);
+                    }
+                } catch (error) {
+                    console.error('Failed to load campaigns:', error);
+                }
+            }
+
+            async loadFormBuilder() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/form-structure`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.renderFormBuilder(data.structure);
+                    }
+                } catch (error) {
+                    console.error('Failed to load form structure:', error);
+                }
+            }
+
+            async loadUsers() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/users-with-admin-status`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.renderUsers(data.users);
+                    }
+                } catch (error) {
+                    console.error('Failed to load users:', error);
+                }
+            }
+
+            updateOverviewStats(stats) {
+                document.getElementById('totalUsers').textContent = stats.total_users || 0;
+                document.getElementById('totalLeads').textContent = stats.total_leads || 0;
+                document.getElementById('totalCampaigns').textContent = stats.total_campaigns || 0;
+                document.getElementById('recentLeads').textContent = stats.recent_leads || 0;
+            }
+
+            renderRecentLeads(leads) {
+                const tbody = document.getElementById('recentLeadsTableBody');
+                tbody.innerHTML = leads.map(lead => `
+                    <tr>
+                        <td>${lead.name}</td>
+                        <td>${lead.contact}</td>
+                        <td>${lead.campaign_name || '-'}</td>
+                        <td><span class="status-badge ${lead.status}">${lead.status}</span></td>
+                        <td>${lead.user_email}</td>
+                        <td>${new Date(lead.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="adminPanel.viewLead('${lead.id}')">View</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderAllLeads(leads) {
+                const tbody = document.getElementById('allLeadsTableBody');
+                tbody.innerHTML = leads.map(lead => `
+                    <tr>
+                        <td>${lead.name}</td>
+                        <td>${lead.phone_number || '-'}</td>
+                        <td>${lead.campaign_name || '-'}</td>
+                        <td>${lead.ap ? `$${lead.ap.toLocaleString()}` : '-'} / ${lead.mv ? `$${lead.mv.toLocaleString()}` : '-'}</td>
+                        <td>${lead.bedrooms || '-'}BR, ${lead.bathrooms || '-'}BA</td>
+                        <td><span class="status-badge ${lead.status}">${lead.status}</span></td>
+                        <td>${lead.user_email}</td>
+                        <td>${new Date(lead.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <div class="admin-actions">
+                                <button class="btn btn-sm btn-outline" onclick="adminPanel.viewLead('${lead.id}')">View</button>
+                                <button class="btn btn-sm btn-primary" onclick="adminPanel.updateLeadStatus('${lead.id}', '${lead.status}')">Update Status</button>
+                                <button class="btn btn-sm btn-secondary" onclick="adminPanel.viewNotes('${lead.id}')">Notes</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderCampaigns(campaigns) {
+                const container = document.getElementById('campaignList');
+                container.innerHTML = campaigns.map(campaign => `
+                    <div class="campaign-item">
+                        <div class="campaign-info">
+                            <div class="campaign-name">${campaign.name}</div>
+                            <div class="campaign-description">${campaign.description || 'No description'}</div>
+                        </div>
+                        <div class="field-actions">
+                            <button class="btn btn-sm btn-outline" onclick="adminPanel.editCampaign('${campaign.id}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="adminPanel.deleteCampaign('${campaign.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderFormBuilder(structure) {
+                const container = document.getElementById('fieldList');
+                container.innerHTML = structure.map(section => `
+                    <div class="section-group">
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">${section.title}</h4>
+                        ${section.fields.map(field => `
+                            <div class="field-item">
+                                <div class="field-info">
+                                    <div class="field-name">${field.label}</div>
+                                    <div class="field-type">${field.type} ${field.required ? '(Required)' : ''}</div>
+                                </div>
+                                <div class="field-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="adminPanel.editField('${field.name}')">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="adminPanel.deleteField('${field.name}')">Delete</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+            }
+
+            renderUsers(users) {
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.email}</td>
+                        <td>
+                            <span class="admin-badge ${user.isAdmin ? 'admin' : 'user'}">
+                                ${user.isAdmin ? 'Admin' : 'User'}
+                            </span>
+                        </td>
+                        <td>${user.leads_count || 0}</td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="adminPanel.viewUser('${user.id}')">View</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            openCampaignModal(campaign = null) {
+                const modal = document.getElementById('campaignModal');
+                const title = document.getElementById('campaignModalTitle');
+                const form = document.getElementById('campaignForm');
+                const nameInput = document.getElementById('campaignName');
+                const descInput = document.getElementById('campaignDescription');
+                const idInput = document.getElementById('campaignId');
+
+                if (campaign) {
+                    title.textContent = 'Edit Campaign';
+                    nameInput.value = campaign.name;
+                    descInput.value = campaign.description || '';
+                    idInput.value = campaign.id;
+                } else {
+                    title.textContent = 'Add Campaign';
+                    form.reset();
+                    idInput.value = '';
+                }
+
+                modal.classList.remove('hidden');
+            }
+
+            closeCampaignModal() {
+                document.getElementById('campaignModal').classList.add('hidden');
+            }
+
+            async saveCampaign() {
+                const form = document.getElementById('campaignForm');
+                const formData = new FormData(form);
+                const campaignId = formData.get('campaignId');
+
+                const data = {
+                    name: formData.get('name'),
+                    description: formData.get('description')
+                };
+
+                try {
+                    const url = campaignId ? 
+                        `${this.apiBaseUrl}/admin/campaigns/${campaignId}` : 
+                        `${this.apiBaseUrl}/admin/campaigns`;
+                    
+                    const method = campaignId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        this.showNotification('Campaign saved successfully', 'success');
+                        this.closeCampaignModal();
+                        this.loadCampaigns();
+                    } else {
+                        const error = await response.json();
+                        this.showNotification(error.error || 'Failed to save campaign', 'error');
+                    }
+                } catch (error) {
+                    console.error('Save campaign error:', error);
+                    this.showNotification('Failed to save campaign', 'error');
+                }
+            }
+
+            openFieldModal(field = null) {
+                const modal = document.getElementById('fieldModal');
+                const title = document.getElementById('fieldModalTitle');
+                const form = document.getElementById('fieldForm');
+                const idInput = document.getElementById('fieldId');
+
+                if (field) {
+                    title.textContent = 'Edit Field';
+                    // Populate form with field data
+                    idInput.value = field.name;
+                } else {
+                    title.textContent = 'Add Field';
+                    form.reset();
+                    idInput.value = '';
+                }
+
+                modal.classList.remove('hidden');
+            }
+
+            closeFieldModal() {
+                document.getElementById('fieldModal').classList.add('hidden');
+            }
+
+            async saveField() {
+                const form = document.getElementById('fieldForm');
+                const formData = new FormData(form);
+                const fieldId = formData.get('fieldId');
+
+                const data = {
+                    fieldName: formData.get('fieldName'),
+                    fieldType: formData.get('fieldType'),
+                    fieldLabel: formData.get('fieldLabel'),
+                    fieldPlaceholder: formData.get('fieldPlaceholder'),
+                    fieldRequired: formData.get('fieldRequired') === 'on',
+                    fieldOptions: formData.get('fieldOptions') ? 
+                        formData.get('fieldOptions').split('\n').filter(opt => opt.trim()) : []
+                };
+
+                try {
+                    const url = fieldId ? 
+                        `${this.apiBaseUrl}/admin/form-fields/${fieldId}` : 
+                        `${this.apiBaseUrl}/admin/form-fields`;
+                    
+                    const method = fieldId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        this.showNotification('Field saved successfully', 'success');
+                        this.closeFieldModal();
+                        this.loadFormBuilder();
+                    } else {
+                        const error = await response.json();
+                        this.showNotification(error.error || 'Failed to save field', 'error');
+                    }
+                } catch (error) {
+                    console.error('Save field error:', error);
+                    this.showNotification('Failed to save field', 'error');
+                }
+            }
+
+            async viewLead(leadId) {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/admin/leads/${leadId}`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const lead = await response.json();
+                        this.showLeadDetail(lead);
+                    }
+                } catch (error) {
+                    console.error('Failed to load lead details:', error);
+                }
+            }
+
+            showLeadDetail(lead) {
+                const modal = document.getElementById('leadDetailModal');
+                const content = document.getElementById('leadDetailContent');
+
+                content.innerHTML = `
+                    <div class="lead-detail">
+                        <div class="detail-section">
+                            <h3>Basic Information</h3>
+                            <p><strong>Name:</strong> ${lead.name}</p>
+                            <p><strong>Phone:</strong> ${lead.phone_number || 'N/A'}</p>
+                            <p><strong>Campaign:</strong> ${lead.campaign_name || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Property Details</h3>
+                            <p><strong>AP:</strong> ${lead.ap ? `$${lead.ap.toLocaleString()}` : 'N/A'}</p>
+                            <p><strong>MV:</strong> ${lead.mv ? `$${lead.mv.toLocaleString()}` : 'N/A'}</p>
+                            <p><strong>Bedrooms:</strong> ${lead.bedrooms || 'N/A'}</p>
+                            <p><strong>Bathrooms:</strong> ${lead.bathrooms || 'N/A'}</p>
+                            <p><strong>Condition:</strong> ${lead.condition_rating || 'N/A'}/10</p>
+                            <p><strong>Occupancy:</strong> ${lead.occupancy || 'N/A'}</p>
+                            <p><strong>Repairs Needed:</strong> ${lead.repairs_needed || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Deal Information</h3>
+                            <p><strong>Reason:</strong> ${lead.reason || 'N/A'}</p>
+                            <p><strong>Closing:</strong> ${lead.closing || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Location</h3>
+                            <p><strong>Address:</strong> ${lead.address || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Additional Information</h3>
+                            <p>${lead.additional_info || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h3>Lead Status</h3>
+                            <p><strong>Status:</strong> <span class="status-badge ${lead.status}">${lead.status}</span></p>
+                            <p><strong>Created:</strong> ${new Date(lead.created_at).toLocaleString()}</p>
+                            <p><strong>User:</strong> ${lead.user_email}</p>
+                        </div>
+                    </div>
+                `;
+
+                modal.classList.remove('hidden');
+            }
+
+            closeLeadDetailModal() {
+                document.getElementById('leadDetailModal').classList.add('hidden');
+            }
+
+            updateLeadStatus(leadId, currentStatus) {
+                const modal = document.getElementById('adminStatusModal');
+                const form = document.getElementById('adminStatusForm');
+                const statusSelect = document.getElementById('adminStatus');
+                const leadIdInput = document.getElementById('adminLeadId');
+
+                leadIdInput.value = leadId;
+                statusSelect.value = currentStatus;
+                form.reset();
+                leadIdInput.value = leadId;
+
+                modal.classList.remove('hidden');
+            }
+
+            async viewNotes(leadId) {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/leads/${leadId}/notes`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.showNotesModal(leadId, data.notes);
+                    }
+                } catch (error) {
+                    console.error('Failed to load notes:', error);
+                    this.showNotification('Failed to load notes', 'error');
+                }
+            }
+
+            showNotesModal(leadId, notes) {
+                const modal = document.getElementById('leadNotesModal');
+                const content = document.getElementById('leadNotesContent');
+                const leadIdInput = document.getElementById('noteLeadId');
+
+                leadIdInput.value = leadId;
+
+                if (notes.length === 0) {
+                    content.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No notes yet.</p>';
+                } else {
+                    content.innerHTML = notes.map(note => `
+                        <div class="note-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: bold; color: var(--text-primary);">${note.users?.email || 'Unknown'}</span>
+                                <span style="color: var(--text-secondary); font-size: 0.9rem;">${new Date(note.created_at).toLocaleString()}</span>
+                            </div>
+                            <div style="color: var(--text-primary);">${note.note_text}</div>
+                            ${note.is_admin_note ? '<span style="background: var(--primary-color); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-top: 0.5rem; display: inline-block;">Admin Note</span>' : ''}
+                        </div>
+                    `).join('');
+                }
+
+                modal.classList.remove('hidden');
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = type;
+                notification.style.display = 'block';
+                
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 5000);
+            }
+
+            async logout() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/logout`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        window.location.href = '../index.html';
+                    }
+                } catch (error) {
+                    console.error('Logout failed:', error);
+                    window.location.href = '../index.html';
+                }
+            }
+        }
+
+        // Initialize admin panel when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.adminPanel = new AdminPanel();
+        });
+    </script>
 </body>
 </html> 

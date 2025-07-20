@@ -20,6 +20,10 @@ class CRMApp {
             if (response.ok) {
                 const data = await response.json();
                 this.currentUser = data.user;
+                
+                // Check admin status
+                await this.checkAdminStatus();
+                
                 this.updateUIForAuthenticatedUser();
             } else {
                 this.updateUIForUnauthenticatedUser();
@@ -30,12 +34,36 @@ class CRMApp {
         }
     }
 
+    async checkAdminStatus() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.currentUser.isAdmin = data.isAdmin;
+            }
+        } catch (error) {
+            console.error('Admin status check failed:', error);
+            this.currentUser.isAdmin = false;
+        }
+    }
+
     updateUIForAuthenticatedUser() {
         const authLinks = document.querySelectorAll('.auth-required');
         const guestLinks = document.querySelectorAll('.guest-only');
+        const adminLinks = document.querySelectorAll('.admin-only');
         
         authLinks.forEach(link => link.style.display = 'inline-block');
         guestLinks.forEach(link => link.style.display = 'none');
+        
+        // Show admin links if user is admin
+        if (this.currentUser && this.currentUser.isAdmin) {
+            adminLinks.forEach(link => link.style.display = 'inline-block');
+        } else {
+            adminLinks.forEach(link => link.style.display = 'none');
+        }
         
         // Update user info if elements exist
         const userEmail = document.getElementById('userEmail');

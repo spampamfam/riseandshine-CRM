@@ -123,11 +123,12 @@ class Dashboard {
     }
 
     updateStatsDisplay() {
-        document.getElementById('totalLeads').textContent = this.stats.total || 0;
-        document.getElementById('newLeads').textContent = this.stats.new || 0;
-        document.getElementById('contactedLeads').textContent = this.stats.contacted || 0;
+        document.getElementById('totalQualifiedThisMonth').textContent = this.stats.total_qualified_this_month || 0;
+        document.getElementById('leadsToday').textContent = this.stats.leads_today || 0;
         document.getElementById('qualifiedLeads').textContent = this.stats.qualified || 0;
-        document.getElementById('convertedLeads').textContent = this.stats.converted || 0;
+        document.getElementById('disqualifiedLeads').textContent = this.stats.disqualified || 0;
+        document.getElementById('callbackLeads').textContent = this.stats.callback || 0;
+        document.getElementById('inventoryLeads').textContent = this.stats.inventory || 0;
     }
 
     async loadLeads() {
@@ -175,8 +176,8 @@ class Dashboard {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${this.escapeHtml(lead.name)}</td>
-                <td>${this.escapeHtml(lead.contact)}</td>
-                <td>${this.escapeHtml(lead.source)}</td>
+                <td>${this.escapeHtml(lead.phone_number || lead.contact || '-')}</td>
+                <td>${this.escapeHtml(lead.campaign_name || lead.source || '-')}</td>
                 <td><span class="status-badge status-${lead.status}">${lead.status}</span></td>
                 <td>${this.formatDate(lead.created_at)}</td>
                 <td>
@@ -226,22 +227,21 @@ class Dashboard {
         this.loadLeads();
     }
 
-    openLeadModal(leadId = null) {
+    async openLeadModal(leadId = null) {
         const modal = document.getElementById('leadModal');
         const modalTitle = document.getElementById('modalTitle');
         const form = document.getElementById('leadForm');
         const leadIdInput = document.getElementById('leadId');
+
+        // Load campaigns for dropdown
+        await this.loadCampaigns();
 
         if (leadId) {
             // Edit mode
             const lead = this.leads.find(l => l.id === leadId);
             if (lead) {
                 modalTitle.textContent = 'Edit Lead';
-                leadIdInput.value = lead.id;
-                document.getElementById('leadName').value = lead.name;
-                document.getElementById('leadContact').value = lead.contact;
-                document.getElementById('leadSource').value = lead.source;
-                document.getElementById('leadStatus').value = lead.status;
+                this.populateLeadForm(lead);
             }
         } else {
             // Add mode
@@ -251,6 +251,65 @@ class Dashboard {
         }
 
         modal.classList.remove('hidden');
+    }
+
+    async loadCampaigns() {
+        try {
+            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/admin/campaigns', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const campaignSelect = document.getElementById('leadCampaign');
+                if (campaignSelect) {
+                    // Keep the first option (Select Campaign)
+                    campaignSelect.innerHTML = '<option value="">Select Campaign</option>';
+                    
+                    // Add campaign options
+                    data.campaigns.forEach(campaign => {
+                        const option = document.createElement('option');
+                        option.value = campaign.id;
+                        option.textContent = campaign.name;
+                        campaignSelect.appendChild(option);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load campaigns:', error);
+        }
+    }
+
+    populateLeadForm(lead) {
+        const leadIdInput = document.getElementById('leadId');
+        leadIdInput.value = lead.id;
+        
+        // Basic Information
+        document.getElementById('leadName').value = lead.name || '';
+        document.getElementById('leadPhone').value = lead.phone_number || '';
+        document.getElementById('leadCampaign').value = lead.campaign_id || '';
+        
+        // Property Details
+        document.getElementById('leadAP').value = lead.ap || '';
+        document.getElementById('leadMV').value = lead.mv || '';
+        document.getElementById('leadBedrooms').value = lead.bedrooms || '';
+        document.getElementById('leadBathrooms').value = lead.bathrooms || '';
+        document.getElementById('leadCondition').value = lead.condition_rating || '';
+        document.getElementById('leadOccupancy').value = lead.occupancy || '';
+        document.getElementById('leadRepairs').value = lead.repairs_needed || '';
+        
+        // Deal Information
+        document.getElementById('leadReason').value = lead.reason || '';
+        document.getElementById('leadClosing').value = lead.closing || '';
+        
+        // Location
+        document.getElementById('leadAddress').value = lead.address || '';
+        
+        // Additional Information
+        document.getElementById('leadAdditionalInfo').value = lead.additional_info || '';
+        
+        // Status
+        document.getElementById('leadStatus').value = lead.status || 'new';
     }
 
     closeLeadModal() {
@@ -263,10 +322,22 @@ class Dashboard {
         
         const formData = new FormData(e.target);
         const leadId = formData.get('leadId');
+        
         const leadData = {
             name: formData.get('name'),
-            contact: formData.get('contact'),
-            source: formData.get('source'),
+            phone_number: formData.get('phoneNumber'),
+            campaign_id: formData.get('campaign') || null,
+            ap: formData.get('ap') ? parseFloat(formData.get('ap')) : null,
+            mv: formData.get('mv') ? parseFloat(formData.get('mv')) : null,
+            repairs_needed: formData.get('repairsNeeded'),
+            bedrooms: formData.get('bedrooms') ? parseInt(formData.get('bedrooms')) : null,
+            bathrooms: formData.get('bathrooms') ? parseFloat(formData.get('bathrooms')) : null,
+            condition_rating: formData.get('condition') ? parseInt(formData.get('condition')) : null,
+            occupancy: formData.get('occupancy'),
+            reason: formData.get('reason'),
+            closing: formData.get('closing'),
+            address: formData.get('address'),
+            additional_info: formData.get('additionalInfo'),
             status: formData.get('status')
         };
 

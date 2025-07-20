@@ -158,24 +158,171 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// Get lead statistics for user
-router.get('/stats', async (req, res) => {
+// Get lead notes
+router.get('/:id/notes', async (req, res) => {
     try {
-        const { data, error } = await supabase
+        const { id } = req.params;
+
+        // Verify lead belongs to user
+        const { data: existingLead } = await supabase
             .from('leads')
-            .select('status')
-            .eq('user_id', req.user.id);
+            .select('id')
+            .eq('id', id)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (!existingLead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        const { data: notes, error } = await supabase
+            .from('lead_notes')
+            .select(`
+                *,
+                auth.users(email)
+            `)
+            .eq('lead_id', id)
+            .order('created_at', { ascending: false });
 
         if (error) {
             return res.status(500).json({ error: error.message });
         }
 
-        const stats = {
-            total: data.length,
-            new: data.filter(lead => lead.status === 'new').length,
-            contacted: data.filter(lead => lead.status === 'contacted').length,
-            qualified: data.filter(lead => lead.status === 'qualified').length,
-            converted: data.filter(lead => lead.status === 'converted').length
+        res.json({ notes });
+    } catch (error) {
+        console.error('Get lead notes error:', error);
+        res.status(500).json({ error: 'Failed to fetch lead notes' });
+    }
+});
+
+// Add note to lead
+router.post('/:id/notes', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { note_text, note_type = 'general' } = req.body;
+
+        // Verify lead belongs to user
+        const { data: existingLead } = await supabase
+            .from('leads')
+            .select('id')
+            .eq('id', id)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (!existingLead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        const { data, error } = await supabase
+            .from('lead_notes')
+            .insert({
+                lead_id: id,
+                user_id: req.user.id,
+                note_text,
+                note_type
+            })
+            .select()
+            .single();
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.status(201).json({ note: data });
+    } catch (error) {
+        console.error('Add note error:', error);
+        res.status(500).json({ error: 'Failed to add note' });
+    }
+});
+
+// Admin: Update lead status and add note
+router.put('/:id/admin-update', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, note_text } = req.body;
+
+        // Check if user is admin
+        const { data: adminCheck, error: adminError } = await supabase
+            .rpc('is_admin', { user_uuid: req.user.id });
+
+        if (adminError || !adminCheck) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Verify lead exists
+        const { data: existingLead } = await supabase
+            .from('leads')
+            .select('id, user_id')
+            .eq('id', id)
+            .single();
+
+        if (!existingLead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        // Update lead status
+        const { data: updatedLead, error: updateError } = await supabase
+            .from('leads')
+            .update({
+                status,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (updateError) {
+            return res.status(500).json({ error: updateError.message });
+        }
+
+        // Add admin note if provided
+        let note = null;
+        if (note_text) {
+            const { data: noteData, error: noteError } = await supabase
+                .from('lead_notes')
+                .insert({
+                    lead_id: id,
+                    user_id: req.user.id,
+                    note_text,
+                    note_type: 'admin_note',
+                    is_admin_note: true
+                })
+                .select()
+                .single();
+
+            if (!noteError) {
+                note = noteData;
+            }
+        }
+
+        res.json({ 
+            lead: updatedLead, 
+            note,
+            message: 'Lead status updated successfully' 
+        });
+    } catch (error) {
+        console.error('Admin update error:', error);
+        res.status(500).json({ error: 'Failed to update lead' });
+    }
+});
+
+// Get lead statistics for user
+router.get('/stats', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .rpc('get_lead_stats', { user_uuid: req.user.id });
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        const stats = data[0] || {
+            total_qualified_this_month: 0,
+            leads_today: 0,
+            qualified: 0,
+            disqualified: 0,
+            callback: 0,
+            inventory: 0
         };
 
         res.json({ stats });

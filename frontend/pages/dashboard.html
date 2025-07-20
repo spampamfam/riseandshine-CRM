@@ -6,6 +6,36 @@
     <title>Dashboard - CRM Pro</title>
     <link rel="stylesheet" href="../assets/styles.css">
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <style>
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .modal-content {
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .form-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -37,24 +67,28 @@
                 <!-- Statistics Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="totalLeads">0</div>
-                        <div class="stat-label">Total Leads</div>
+                        <div class="stat-number" id="totalQualifiedThisMonth">0</div>
+                        <div class="stat-label">Total Qualified This Month</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="newLeads">0</div>
-                        <div class="stat-label">New</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="contactedLeads">0</div>
-                        <div class="stat-label">Contacted</div>
+                        <div class="stat-number" id="leadsToday">0</div>
+                        <div class="stat-label">Leads Today</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="qualifiedLeads">0</div>
                         <div class="stat-label">Qualified</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="convertedLeads">0</div>
-                        <div class="stat-label">Converted</div>
+                        <div class="stat-number" id="disqualifiedLeads">0</div>
+                        <div class="stat-label">Disqualified</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="callbackLeads">0</div>
+                        <div class="stat-label">Callback</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="inventoryLeads">0</div>
+                        <div class="stat-label">Inventory</div>
                     </div>
                 </div>
 
@@ -75,6 +109,9 @@
                                 <option value="new">New</option>
                                 <option value="contacted">Contacted</option>
                                 <option value="qualified">Qualified</option>
+                                <option value="disqualified">Disqualified</option>
+                                <option value="callback">Callback</option>
+                                <option value="inventory">Inventory</option>
                                 <option value="converted">Converted</option>
                             </select>
                         </div>
@@ -110,44 +147,161 @@
 
     <!-- Add/Edit Lead Modal -->
     <div id="leadModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle">Add New Lead</h2>
                 <button class="modal-close" id="closeModal">&times;</button>
             </div>
             <form id="leadForm">
                 <input type="hidden" id="leadId" name="leadId">
-                <div class="form-group">
-                    <label for="leadName" class="form-label">Name *</label>
-                    <input type="text" id="leadName" name="name" class="form-input" required>
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="leadName" class="form-label">Name *</label>
+                            <input type="text" id="leadName" name="name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="leadPhone" class="form-label">Phone Number *</label>
+                            <input type="tel" id="leadPhone" name="phoneNumber" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="leadCampaign" class="form-label">Campaign</label>
+                        <select id="leadCampaign" name="campaign" class="form-input">
+                            <option value="">Select Campaign</option>
+                            <!-- Campaign options will be loaded dynamically -->
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="leadContact" class="form-label">Contact *</label>
-                    <input type="text" id="leadContact" name="contact" class="form-input" required>
+
+                <!-- Property Details -->
+                <div class="form-section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Property Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="leadAP" class="form-label">AP (Asking Price)</label>
+                            <input type="number" id="leadAP" name="ap" class="form-input" placeholder="Enter asking price">
+                        </div>
+                        <div class="form-group">
+                            <label for="leadMV" class="form-label">MV (Market Value)</label>
+                            <input type="number" id="leadMV" name="mv" class="form-input" placeholder="Enter market value">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="leadBedrooms" class="form-label">Bedrooms</label>
+                            <select id="leadBedrooms" name="bedrooms" class="form-input">
+                                <option value="">Select</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6+">6+</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="leadBathrooms" class="form-label">Bathrooms</label>
+                            <select id="leadBathrooms" name="bathrooms" class="form-input">
+                                <option value="">Select</option>
+                                <option value="1">1</option>
+                                <option value="1.5">1.5</option>
+                                <option value="2">2</option>
+                                <option value="2.5">2.5</option>
+                                <option value="3">3</option>
+                                <option value="3.5">3.5</option>
+                                <option value="4">4</option>
+                                <option value="4+">4+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="leadCondition" class="form-label">Condition (1-10 Scale)</label>
+                            <select id="leadCondition" name="condition" class="form-input">
+                                <option value="">Select Condition</option>
+                                <option value="1">1 - Very Poor</option>
+                                <option value="2">2 - Poor</option>
+                                <option value="3">3 - Fair</option>
+                                <option value="4">4 - Below Average</option>
+                                <option value="5">5 - Average</option>
+                                <option value="6">6 - Above Average</option>
+                                <option value="7">7 - Good</option>
+                                <option value="8">8 - Very Good</option>
+                                <option value="9">9 - Excellent</option>
+                                <option value="10">10 - Perfect</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="leadOccupancy" class="form-label">Occupancy</label>
+                            <select id="leadOccupancy" name="occupancy" class="form-input">
+                                <option value="">Select Occupancy</option>
+                                <option value="owner_occupied">Owner Occupied</option>
+                                <option value="tenants">Tenants</option>
+                                <option value="vacant">Vacant</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="leadRepairs" class="form-label">Repairs Needed</label>
+                        <textarea id="leadRepairs" name="repairsNeeded" class="form-input" rows="3" placeholder="Describe repairs needed..."></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="leadSource" class="form-label">Source</label>
-                    <select id="leadSource" name="source" class="form-input">
-                        <option value="website">Website</option>
-                        <option value="referral">Referral</option>
-                        <option value="social">Social Media</option>
-                        <option value="email">Email Campaign</option>
-                        <option value="phone">Phone Call</option>
-                        <option value="other">Other</option>
-                    </select>
+
+                <!-- Deal Information -->
+                <div class="form-section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Deal Information</h3>
+                    <div class="form-group">
+                        <label for="leadReason" class="form-label">Reason for Selling</label>
+                        <textarea id="leadReason" name="reason" class="form-input" rows="2" placeholder="Why is the property being sold?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="leadClosing" class="form-label">Closing Timeline</label>
+                        <input type="text" id="leadClosing" name="closing" class="form-input" placeholder="e.g., ASAP, 30 days, 60 days">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="leadStatus" class="form-label">Status</label>
-                    <select id="leadStatus" name="status" class="form-input">
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="qualified">Qualified</option>
-                        <option value="converted">Converted</option>
-                    </select>
+
+                <!-- Location -->
+                <div class="form-section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Location</h3>
+                    <div class="form-group">
+                        <label for="leadAddress" class="form-label">Address *</label>
+                        <textarea id="leadAddress" name="address" class="form-input" rows="2" required placeholder="Enter full property address"></textarea>
+                    </div>
                 </div>
-                <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary">Save Lead</button>
+
+                <!-- Additional Information -->
+                <div class="form-section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Additional Information</h3>
+                    <div class="form-group">
+                        <label for="leadAdditionalInfo" class="form-label">Additional Info</label>
+                        <textarea id="leadAdditionalInfo" name="additionalInfo" class="form-input" rows="4" placeholder="Any additional notes or information..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="form-section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Lead Status</h3>
+                    <div class="form-group">
+                        <label for="leadStatus" class="form-label">Status</label>
+                        <select id="leadStatus" name="status" class="form-input">
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="qualified">Qualified</option>
+                            <option value="disqualified">Disqualified</option>
+                            <option value="callback">Callback</option>
+                            <option value="inventory">Inventory</option>
+                            <option value="converted">Converted</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
                     <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Lead</button>
                 </div>
             </form>
         </div>
@@ -172,4 +326,5 @@
     <script src="../js/main.js"></script>
     <script src="../js/dashboard.js"></script>
 </body>
+</html> 
 </html> 
