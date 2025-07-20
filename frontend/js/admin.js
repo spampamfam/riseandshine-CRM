@@ -15,19 +15,30 @@ class AdminPanel {
     async waitForAuth() {
         // Wait for main.js to complete authentication check
         let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max wait
+        const maxAttempts = 100; // 10 seconds max wait (increased)
         
         while (attempts < maxAttempts) {
             // Check if main.js has completed authentication
             if (window.crmApp && window.crmApp.currentUser) {
                 this.currentUser = window.crmApp.currentUser;
+                console.log('🔍 Admin panel - User found:', this.currentUser);
+                console.log('🔍 Admin panel - isAdmin:', this.currentUser.isAdmin);
+                
+                // Wait a bit more for admin status to be loaded
+                if (this.currentUser.isAdmin === undefined) {
+                    console.log('🔍 Admin status not loaded yet, waiting...');
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    attempts++;
+                    continue;
+                }
                 
                 // Check if user is admin
                 if (!this.currentUser.isAdmin) {
-                    console.log('User is not admin, redirecting to dashboard');
+                    console.log('🔍 User is not admin, redirecting to dashboard');
                     window.location.href = 'dashboard.html';
                     return;
                 }
+                console.log('🔍 User is admin, proceeding to admin panel');
                 return;
             }
             
@@ -37,7 +48,7 @@ class AdminPanel {
         }
         
         // If auth didn't complete, redirect to login
-        console.log('Auth timeout, redirecting to login');
+        console.log('🔍 Auth timeout, redirecting to login');
         window.location.href = 'login.html';
     }
 

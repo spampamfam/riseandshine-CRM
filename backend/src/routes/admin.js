@@ -7,13 +7,36 @@ const router = express.Router();
 // Check if user is admin
 const checkAdminStatus = async (req, res, next) => {
     try {
-        const { data, error } = await supabase
+        console.log('🔍 Middleware: Checking admin status for user:', req.user.id);
+        
+        // Try RPC function first
+        const { data: rpcData, error: rpcError } = await supabase
             .rpc('is_admin', { user_uuid: req.user.id });
 
-        if (error || !data) {
+        console.log('🔍 Middleware: RPC result:', { data: rpcData, error: rpcError });
+
+        if (rpcError) {
+            console.log('🔍 Middleware: RPC failed, trying direct query...');
+            
+            // Fallback: direct query to admin_roles table
+            const { data: adminRole, error: queryError } = await supabase
+                .from('admin_roles')
+                .select('is_admin')
+                .eq('user_id', req.user.id)
+                .single();
+
+            console.log('🔍 Middleware: Direct query result:', { adminRole, queryError });
+
+            if (queryError || !adminRole?.is_admin) {
+                console.log('🔍 Middleware: User is not admin');
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+        } else if (!rpcData) {
+            console.log('🔍 Middleware: RPC returned false - user is not admin');
             return res.status(403).json({ error: 'Admin access required' });
         }
 
+        console.log('🔍 Middleware: User is admin, proceeding');
         next();
     } catch (error) {
         console.error('Admin check error:', error);
@@ -60,14 +83,38 @@ router.get('/leads', authMiddleware, checkAdminStatus, async (req, res) => {
 // Get current user's admin status
 router.get('/my-status', authMiddleware, async (req, res) => {
     try {
-        const { data, error } = await supabase
+        console.log('🔍 Checking admin status for user:', req.user.id);
+        
+        // Try RPC function first
+        const { data: rpcData, error: rpcError } = await supabase
             .rpc('is_admin', { user_uuid: req.user.id });
 
-        if (error) {
-            return res.status(500).json({ error: 'Failed to check admin status' });
-        }
+        console.log('🔍 Admin status RPC result:', { data: rpcData, error: rpcError });
 
-        res.json({ isAdmin: data });
+        if (rpcError) {
+            console.log('🔍 RPC failed, trying direct query...');
+            
+            // Fallback: direct query to admin_roles table
+            const { data: adminRole, error: queryError } = await supabase
+                .from('admin_roles')
+                .select('is_admin')
+                .eq('user_id', req.user.id)
+                .single();
+
+            console.log('🔍 Direct query result:', { adminRole, queryError });
+
+            if (queryError) {
+                console.error('🔍 Both RPC and direct query failed:', queryError);
+                return res.status(500).json({ error: 'Failed to check admin status' });
+            }
+
+            const isAdmin = adminRole?.is_admin || false;
+            console.log('🔍 Admin status response (direct query):', { isAdmin });
+            res.json({ isAdmin });
+        } else {
+            console.log('🔍 Admin status response (RPC):', { isAdmin: rpcData });
+            res.json({ isAdmin: rpcData });
+        }
     } catch (error) {
         console.error('Check admin status error:', error);
         res.status(500).json({ error: 'Failed to check admin status' });
