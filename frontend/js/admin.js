@@ -1,48 +1,34 @@
-// Admin Dashboard functionality
-class AdminDashboard {
+class AdminPanel {
     constructor() {
-        this.currentPage = 1;
-        this.itemsPerPage = 20;
-        this.currentFilters = {
-            search: ''
-        };
-        this.users = [];
-        this.stats = {};
+        this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
+        this.currentUser = null;
         this.init();
     }
 
     async init() {
         await this.checkAuth();
         this.setupEventListeners();
-        await this.loadStats();
-        await this.loadUsers();
+        this.loadContent();
     }
 
     async checkAuth() {
         try {
-            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
+            const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
                 credentials: 'include'
             });
             
-            if (!response.ok) {
+            if (response.ok) {
+                const data = await response.json();
+                this.currentUser = data.user;
+                
+                // Check admin status
+                await this.checkAdminStatus();
+                
+                if (!this.currentUser.isAdmin) {
+                    window.location.href = 'dashboard.html';
+                }
+            } else {
                 window.location.href = 'login.html';
-                return;
-            }
-            
-            const data = await response.json();
-            this.currentUser = data.user;
-            
-            // Check if user is admin (you can implement your own admin logic)
-            if (!this.currentUser.user_metadata?.role === 'admin') {
-                this.showNotification('Access denied. Admin privileges required.', 'error');
-                window.location.href = 'dashboard.html';
-                return;
-            }
-            
-            // Update user email display
-            const userEmail = document.getElementById('userEmail');
-            if (userEmail) {
-                userEmail.textContent = this.currentUser.email;
             }
         } catch (error) {
             console.error('Auth check failed:', error);
@@ -50,114 +36,158 @@ class AdminDashboard {
         }
     }
 
-    setupEventListeners() {
-        // Refresh button
-        const refreshBtn = document.getElementById('refreshBtn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.refreshData());
-        }
-
-        // User search
-        const userSearchInput = document.getElementById('userSearchInput');
-        if (userSearchInput) {
-            userSearchInput.addEventListener('input', this.debounce(() => {
-                this.currentFilters.search = userSearchInput.value;
-                this.currentPage = 1;
-                this.loadUsers();
-            }, 300));
-        }
-
-        // Modal events
-        this.setupModalEvents();
-    }
-
-    setupModalEvents() {
-        const userModal = document.getElementById('userModal');
-        const deleteUserModal = document.getElementById('deleteUserModal');
-
-        // Close modal buttons
-        document.getElementById('closeUserModal')?.addEventListener('click', () => this.closeUserModal());
-        document.getElementById('closeDeleteUserModal')?.addEventListener('click', () => this.closeDeleteUserModal());
-        document.getElementById('cancelDeleteUser')?.addEventListener('click', () => this.closeDeleteUserModal());
-
-        // Modal backdrop clicks
-        userModal?.addEventListener('click', (e) => {
-            if (e.target === userModal) this.closeUserModal();
-        });
-
-        deleteUserModal?.addEventListener('click', (e) => {
-            if (e.target === deleteUserModal) this.closeDeleteUserModal();
-        });
-    }
-
-    async refreshData() {
-        await this.loadStats();
-        await this.loadUsers();
-        this.showNotification('Data refreshed successfully!', 'success');
-    }
-
-    async loadStats() {
+    async checkAdminStatus() {
         try {
-            const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/admin/stats', {
+            const response = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
                 credentials: 'include'
             });
             
             if (response.ok) {
                 const data = await response.json();
-                this.stats = data.stats;
-                this.updateStatsDisplay();
+                this.currentUser.isAdmin = data.isAdmin;
             }
         } catch (error) {
-            console.error('Failed to load stats:', error);
-            this.showNotification('Failed to load system statistics', 'error');
+            console.error('Admin status check failed:', error);
+            this.currentUser.isAdmin = false;
         }
     }
 
-    updateStatsDisplay() {
-        document.getElementById('totalUsers').textContent = this.stats.total_users || 0;
-        document.getElementById('totalLeads').textContent = this.stats.total_leads || 0;
-        document.getElementById('newLeads').textContent = this.stats.leads_by_status?.new || 0;
-        document.getElementById('contactedLeads').textContent = this.stats.leads_by_status?.contacted || 0;
-        document.getElementById('qualifiedLeads').textContent = this.stats.leads_by_status?.qualified || 0;
-        document.getElementById('convertedLeads').textContent = this.stats.leads_by_status?.converted || 0;
-        document.getElementById('recentUsers').textContent = this.stats.recent_activity?.users_last_30_days || 0;
-        document.getElementById('recentLeads').textContent = this.stats.recent_activity?.leads_last_30_days || 0;
+    setupEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.switchTab(tab.dataset.tab);
+            });
+        });
+
+        // Campaign modal
+        document.getElementById('addCampaignBtn')?.addEventListener('click', () => {
+            this.openCampaignModal();
+        });
+
+        document.getElementById('closeCampaignModal')?.addEventListener('click', () => {
+            this.closeCampaignModal();
+        });
+
+        document.getElementById('cancelCampaignModal')?.addEventListener('click', () => {
+            this.closeCampaignModal();
+        });
+
+        // Campaign form
+        document.getElementById('campaignForm')?.addEventListener('submit', (e) => {
+            this.handleCampaignSubmit(e);
+        });
+
+        // Modal backdrop clicks
+        document.getElementById('campaignModal')?.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('campaignModal')) {
+                this.closeCampaignModal();
+            }
+        });
+    }
+
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.admin-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.admin-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+
+        // Load content based on tab
+        if (tabName === 'campaigns') {
+            this.loadCampaigns();
+        } else if (tabName === 'users') {
+            this.loadUsers();
+        }
+    }
+
+    loadContent() {
+        this.loadCampaigns();
+    }
+
+    async loadCampaigns() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/admin/campaigns`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.renderCampaigns(data.campaigns);
+            } else {
+                throw new Error('Failed to load campaigns');
+            }
+        } catch (error) {
+            console.error('Failed to load campaigns:', error);
+            this.showNotification('Failed to load campaigns', 'error');
+        }
+    }
+
+    renderCampaigns(campaigns) {
+        const container = document.getElementById('campaignList');
+        if (!container) return;
+
+        if (!campaigns || campaigns.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                    No campaigns found. <button onclick="adminPanel.openCampaignModal()" class="btn btn-primary" style="margin-left: 0.5rem;">Add your first campaign</button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = campaigns.map(campaign => `
+            <div class="campaign-item">
+                <div class="campaign-info">
+                    <div class="campaign-name">${this.escapeHtml(campaign.name)}</div>
+                    <div class="campaign-description">${this.escapeHtml(campaign.description || 'No description')}</div>
+                </div>
+                <div class="campaign-actions">
+                    <button onclick="adminPanel.editCampaign('${campaign.id}')" class="btn btn-secondary" style="margin-right: 0.5rem;">Edit</button>
+                    <button onclick="adminPanel.deleteCampaign('${campaign.id}')" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        `).join('');
     }
 
     async loadUsers() {
         try {
-            const params = new URLSearchParams({
-                page: this.currentPage,
-                limit: this.itemsPerPage,
-                ...this.currentFilters
-            });
-
-            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/admin/users?${params}`, {
+            console.log('Loading users...');
+            const response = await fetch(`${this.apiBaseUrl}/admin/users`, {
                 credentials: 'include'
             });
             
+            console.log('Users response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
-                this.users = data.users;
-                this.renderUsersTable();
-                this.renderUserPagination(data.pagination);
+                console.log('Users data:', data);
+                this.renderUsers(data.users);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Users response error:', errorData);
+                throw new Error(errorData.error || 'Failed to load users');
             }
         } catch (error) {
             console.error('Failed to load users:', error);
-            this.showNotification('Failed to load users', 'error');
+            this.showNotification('Failed to load users: ' + error.message, 'error');
         }
     }
 
-    renderUsersTable() {
+    renderUsers(users) {
         const tbody = document.getElementById('usersTableBody');
         if (!tbody) return;
 
-        tbody.innerHTML = '';
-
-        if (this.users.length === 0) {
+        if (!users || users.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                         No users found.
                     </td>
                 </tr>
@@ -165,202 +195,186 @@ class AdminDashboard {
             return;
         }
 
-        this.users.forEach(user => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
+        tbody.innerHTML = users.map(user => `
+            <tr>
                 <td>${this.escapeHtml(user.email)}</td>
-                <td>${user.lead_count || 0}</td>
+                <td>${this.escapeHtml(user.name || 'N/A')}</td>
+                <td>
+                    <span class="status-badge ${user.is_admin ? 'status-qualified' : 'status-new'}">
+                        ${user.is_admin ? 'Admin' : 'User'}
+                    </span>
+                </td>
+                <td>${user.leads_count || 0}</td>
                 <td>${this.formatDate(user.created_at)}</td>
                 <td>
-                    <button onclick="adminDashboard.viewUser('${user.id}')" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 0.5rem;">View</button>
-                    <button onclick="adminDashboard.deleteUser('${user.id}')" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
+                    <button onclick="adminPanel.toggleAdminStatus('${user.id}', ${!user.is_admin})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        ${user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                    </button>
                 </td>
-            `;
-            tbody.appendChild(row);
-        });
+            </tr>
+        `).join('');
     }
 
-    renderUserPagination(pagination) {
-        const paginationContainer = document.getElementById('userPagination');
-        if (!paginationContainer) return;
+    openCampaignModal(campaignId = null) {
+        const modal = document.getElementById('campaignModal');
+        const modalTitle = document.getElementById('campaignModalTitle');
+        const form = document.getElementById('campaignForm');
+        const campaignIdInput = document.getElementById('campaignId');
 
-        if (pagination.totalPages <= 1) {
-            paginationContainer.innerHTML = '';
-            return;
+        if (campaignId) {
+            // Edit mode
+            modalTitle.textContent = 'Edit Campaign';
+            // Load campaign data
+            this.loadCampaignData(campaignId);
+        } else {
+            // Add mode
+            modalTitle.textContent = 'Add Campaign';
+            form.reset();
+            campaignIdInput.value = '';
         }
 
-        let paginationHTML = '';
+        modal.classList.remove('hidden');
+    }
+
+    closeCampaignModal() {
+        const modal = document.getElementById('campaignModal');
+        modal.classList.add('hidden');
+    }
+
+    async handleCampaignSubmit(e) {
+        e.preventDefault();
         
-        // Previous button
-        if (pagination.page > 1) {
-            paginationHTML += `<button onclick="adminDashboard.goToUserPage(${pagination.page - 1})" class="btn btn-outline" style="margin-right: 0.5rem;">Previous</button>`;
-        }
+        const formData = new FormData(e.target);
+        const campaignId = formData.get('campaignId');
+        
+        const campaignData = {
+            name: formData.get('name'),
+            description: formData.get('description') || null
+        };
 
-        // Page numbers
-        for (let i = 1; i <= pagination.totalPages; i++) {
-            if (i === pagination.page) {
-                paginationHTML += `<button class="btn btn-primary" style="margin: 0 0.25rem;">${i}</button>`;
-            } else {
-                paginationHTML += `<button onclick="adminDashboard.goToUserPage(${i})" class="btn btn-outline" style="margin: 0 0.25rem;">${i}</button>`;
-            }
-        }
-
-        // Next button
-        if (pagination.page < pagination.totalPages) {
-            paginationHTML += `<button onclick="adminDashboard.goToUserPage(${pagination.page + 1})" class="btn btn-outline" style="margin-left: 0.5rem;">Next</button>`;
-        }
-
-        paginationContainer.innerHTML = paginationHTML;
-    }
-
-    goToUserPage(page) {
-        this.currentPage = page;
-        this.loadUsers();
-    }
-
-    async viewUser(userId) {
         try {
-            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/admin/users/${userId}`, {
+            const url = campaignId ? 
+                `${this.apiBaseUrl}/admin/campaigns/${campaignId}` : 
+                `${this.apiBaseUrl}/admin/campaigns`;
+            
+            const method = campaignId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(campaignData)
+            });
+
+            if (response.ok) {
+                this.showNotification(`Campaign ${campaignId ? 'updated' : 'created'} successfully!`, 'success');
+                this.closeCampaignModal();
+                this.loadCampaigns();
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to save campaign');
+            }
+        } catch (error) {
+            console.error('Campaign save error:', error);
+            this.showNotification(error.message || 'Failed to save campaign', 'error');
+        }
+    }
+
+    async toggleAdminStatus(userId, makeAdmin) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/admin/users/${userId}/admin-status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ isAdmin: makeAdmin })
+            });
+
+            if (response.ok) {
+                this.showNotification(`User ${makeAdmin ? 'promoted to admin' : 'removed from admin'} successfully!`, 'success');
+                this.loadUsers();
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to update admin status');
+            }
+        } catch (error) {
+            console.error('Admin status update error:', error);
+            this.showNotification(error.message || 'Failed to update admin status', 'error');
+        }
+    }
+
+    async loadCampaignData(campaignId) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/admin/campaigns/${campaignId}`, {
                 credentials: 'include'
             });
             
             if (response.ok) {
-                const data = await response.json();
-                this.openUserModal(data);
-            } else {
-                throw new Error('Failed to load user details');
+                const campaign = await response.json();
+                this.populateCampaignForm(campaign);
             }
         } catch (error) {
-            console.error('Failed to load user details:', error);
-            this.showNotification('Failed to load user details', 'error');
+            console.error('Failed to load campaign data:', error);
         }
     }
 
-    openUserModal(userData) {
-        const modal = document.getElementById('userModal');
-        const modalTitle = document.getElementById('userModalTitle');
-        const modalContent = document.getElementById('userModalContent');
-
-        modalTitle.textContent = `User: ${userData.user.email}`;
-
-        // Create user details content
-        modalContent.innerHTML = `
-            <div style="margin-bottom: 2rem;">
-                <h3>User Information</h3>
-                <p><strong>Email:</strong> ${this.escapeHtml(userData.user.email)}</p>
-                <p><strong>Joined:</strong> ${this.formatDate(userData.user.created_at)}</p>
-                <p><strong>Total Leads:</strong> ${userData.stats.total}</p>
-            </div>
-            
-            <div style="margin-bottom: 2rem;">
-                <h3>Lead Statistics</h3>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                    <div><strong>New:</strong> ${userData.stats.new}</div>
-                    <div><strong>Contacted:</strong> ${userData.stats.contacted}</div>
-                    <div><strong>Qualified:</strong> ${userData.stats.qualified}</div>
-                    <div><strong>Converted:</strong> ${userData.stats.converted}</div>
-                </div>
-            </div>
-            
-            <div>
-                <h3>Recent Leads</h3>
-                ${this.renderUserLeadsTable(userData.leads)}
-            </div>
-        `;
-
-        modal.classList.remove('hidden');
+    populateCampaignForm(campaign) {
+        document.getElementById('campaignId').value = campaign.id;
+        document.getElementById('campaignName').value = campaign.name;
+        document.getElementById('campaignDescription').value = campaign.description || '';
     }
 
-    renderUserLeadsTable(leads) {
-        if (!leads || leads.length === 0) {
-            return '<p style="color: var(--text-secondary);">No leads found.</p>';
+    editCampaign(campaignId) {
+        this.openCampaignModal(campaignId);
+    }
+
+    async deleteCampaign(campaignId) {
+        if (!confirm('Are you sure you want to delete this campaign?')) {
+            return;
         }
-
-        let tableHTML = `
-            <table class="table" style="font-size: 0.875rem;">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Contact</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        leads.forEach(lead => {
-            tableHTML += `
-                <tr>
-                    <td>${this.escapeHtml(lead.name)}</td>
-                    <td>${this.escapeHtml(lead.contact)}</td>
-                    <td><span class="status-badge status-${lead.status}">${lead.status}</span></td>
-                    <td>${this.formatDate(lead.created_at)}</td>
-                </tr>
-            `;
-        });
-
-        tableHTML += '</tbody></table>';
-        return tableHTML;
-    }
-
-    closeUserModal() {
-        const modal = document.getElementById('userModal');
-        modal.classList.add('hidden');
-    }
-
-    deleteUser(userId) {
-        this.userToDelete = userId;
-        const modal = document.getElementById('deleteUserModal');
-        modal.classList.remove('hidden');
-        
-        // Setup confirm delete button
-        const confirmBtn = document.getElementById('confirmDeleteUser');
-        confirmBtn.onclick = () => this.confirmDeleteUser();
-    }
-
-    closeDeleteUserModal() {
-        const modal = document.getElementById('deleteUserModal');
-        modal.classList.add('hidden');
-        this.userToDelete = null;
-    }
-
-    async confirmDeleteUser() {
-        if (!this.userToDelete) return;
 
         try {
-            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/admin/users/${this.userToDelete}`, {
+            const response = await fetch(`${this.apiBaseUrl}/admin/campaigns/${campaignId}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
 
             if (response.ok) {
-                this.showNotification('User deleted successfully!', 'success');
-                this.closeDeleteUserModal();
-                await this.loadStats();
-                await this.loadUsers();
+                this.showNotification('Campaign deleted successfully!', 'success');
+                this.loadCampaigns();
             } else {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to delete user');
+                throw new Error(data.error || 'Failed to delete campaign');
             }
         } catch (error) {
-            console.error('Delete user error:', error);
-            this.showNotification(error.message, 'error');
+            console.error('Campaign delete error:', error);
+            this.showNotification(error.message || 'Failed to delete campaign', 'error');
         }
     }
 
-    // Utility methods
     showNotification(message, type = 'info') {
-        if (window.crmApp) {
-            window.crmApp.showNotification(message, type);
-        }
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
     }
 
     formatDate(dateString) {
-        if (window.crmApp) {
-            return window.crmApp.formatDate(dateString);
-        }
-        return new Date(dateString).toLocaleDateString();
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     }
 
     escapeHtml(text) {
@@ -368,21 +382,7 @@ class AdminDashboard {
         div.textContent = text;
         return div.innerHTML;
     }
-
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
 }
 
-// Initialize admin dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.adminDashboard = new AdminDashboard();
-}); 
+// Initialize admin panel
+const adminPanel = new AdminPanel(); 

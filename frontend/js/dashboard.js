@@ -160,6 +160,7 @@ class Dashboard {
     }
 
     updateStatsDisplay() {
+        document.getElementById('totalLeads').textContent = this.stats.total || 0;
         document.getElementById('totalQualifiedThisMonth').textContent = this.stats.total_qualified_this_month || 0;
         document.getElementById('qualifiedLeads').textContent = this.stats.qualified || 0;
         document.getElementById('disqualifiedLeads').textContent = this.stats.disqualified || 0;
@@ -401,6 +402,7 @@ class Dashboard {
         document.getElementById('leadName').value = lead.name || '';
         document.getElementById('leadPhone').value = lead.phone_number || '';
         document.getElementById('leadCampaign').value = lead.campaign_id || '';
+        document.getElementById('leadListed').value = lead.listed || '';
         
         // Property Details
         document.getElementById('leadAP').value = lead.ap || '';
@@ -441,7 +443,7 @@ class Dashboard {
         
         // Validate required fields
         const requiredFields = [
-            'name', 'phoneNumber', 'campaign', 'ap', 'mv', 'bedrooms', 
+            'name', 'phoneNumber', 'campaign', 'listed', 'ap', 'mv', 'bedrooms', 
             'bathrooms', 'condition', 'occupancy', 'repairsNeeded', 
             'reason', 'closing', 'address', 'additionalInfo'
         ];
@@ -464,6 +466,7 @@ class Dashboard {
             name: formData.get('name'),
             phone_number: formData.get('phoneNumber'),
             campaign_id: formData.get('campaign'),
+            listed: formData.get('listed'),
             ap: parseFloat(formData.get('ap')),
             mv: parseFloat(formData.get('mv')),
             repairs_needed: formData.get('repairsNeeded'),
@@ -566,11 +569,13 @@ class Dashboard {
         if (this.currentUser) {
             content.innerHTML = `
                 <div style="margin-bottom: 1.5rem;">
-                    <h3 style="margin-bottom: 1rem;">User Information</h3>
-                    <p><strong>Email:</strong> ${this.currentUser.email}</p>
-                    <p><strong>User ID:</strong> ${this.currentUser.id}</p>
-                    <p><strong>Admin Status:</strong> ${this.currentUser.isAdmin ? 'Yes' : 'No'}</p>
-                    <p><strong>Created:</strong> ${this.formatDate(this.currentUser.created_at)}</p>
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">User Information</h3>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <p style="margin: 0.5rem 0; color: var(--text-primary);"><strong style="color: var(--primary-color);">Email:</strong> ${this.currentUser.email}</p>
+                        <p style="margin: 0.5rem 0; color: var(--text-primary);"><strong style="color: var(--primary-color);">User ID:</strong> ${this.currentUser.id}</p>
+                        <p style="margin: 0.5rem 0; color: var(--text-primary);"><strong style="color: var(--primary-color);">Admin Status:</strong> <span style="color: ${this.currentUser.isAdmin ? 'var(--accent-success)' : 'var(--text-secondary)'}">${this.currentUser.isAdmin ? 'Yes' : 'No'}</span></p>
+                        <p style="margin: 0.5rem 0; color: var(--text-primary);"><strong style="color: var(--primary-color);">Created:</strong> ${this.formatDate(this.currentUser.created_at)}</p>
+                    </div>
                 </div>
                 ${this.currentUser.isAdmin ? `
                 <div class="form-actions" style="display: flex; gap: 1rem;">
@@ -598,6 +603,7 @@ class Dashboard {
             'name': 'leadName',
             'phoneNumber': 'leadPhone',
             'campaign': 'leadCampaign',
+            'listed': 'leadListed',
             'ap': 'leadAP',
             'mv': 'leadMV',
             'bedrooms': 'leadBedrooms',

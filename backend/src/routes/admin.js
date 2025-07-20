@@ -21,52 +21,7 @@ const checkAdminStatus = async (req, res, next) => {
     }
 };
 
-// Get all users with their lead counts
-router.get('/users', authMiddleware, checkAdminStatus, async (req, res) => {
-    try {
-        const { page = 1, limit = 20 } = req.query;
-        const offset = (page - 1) * limit;
 
-        // Get users with pagination
-        const { data: users, error: usersError, count } = await supabase
-            .from('auth.users')
-            .select('id, email, created_at', { count: 'exact' })
-            .range(offset, offset + limit - 1)
-            .order('created_at', { ascending: false });
-
-        if (usersError) {
-            return res.status(500).json({ error: usersError.message });
-        }
-
-        // Get lead counts for each user
-        const usersWithLeadCounts = await Promise.all(
-            users.map(async (user) => {
-                const { count: leadCount } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('user_id', user.id);
-
-                return {
-                    ...user,
-                    lead_count: leadCount || 0
-                };
-            })
-        );
-
-        res.json({
-            users: usersWithLeadCounts,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total: count,
-                totalPages: Math.ceil(count / limit)
-            }
-        });
-    } catch (error) {
-        console.error('Get users error:', error);
-        res.status(500).json({ error: 'Failed to fetch users' });
-    }
-});
 
 // Get system statistics
 router.get('/stats', authMiddleware, checkAdminStatus, async (req, res) => {
@@ -153,8 +108,82 @@ router.get('/users-with-admin-status', authMiddleware, checkAdminStatus, async (
     }
 });
 
+// Get all users with admin status and lead counts
+router.get('/users', authMiddleware, checkAdminStatus, async (req, res) => {
+    try {
+        const { page = 1, limit = 20 } = req.query;
+        const offset = (page - 1) * limit;
+
+        // Get users with pagination
+        const { data: users, error: usersError, count } = await supabase
+            .from('auth.users')
+            .select('id, email, created_at', { count: 'exact' })
+            .range(offset, offset + limit - 1)
+            .order('created_at', { ascending: false });
+
+        if (usersError) {
+            return res.status(500).json({ error: usersError.message });
+        }
+
+        // Get admin status and lead counts for each user
+        const usersWithData = await Promise.all(
+            users.map(async (user) => {
+                try {
+                    // Get admin status
+                    const { data: adminRole } = await supabase
+                        .from('admin_roles')
+                        .select('is_admin')
+                        .eq('user_id', user.id)
+                        .single();
+
+                    // Get lead count
+                    const { count: leadCount } = await supabase
+                        .from('leads')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('user_id', user.id);
+
+                    // Get user profile data
+                    const { data: profile } = await supabase
+                        .from('user_profiles')
+                        .select('name')
+                        .eq('user_id', user.id)
+                        .single();
+
+                    return {
+                        ...user,
+                        is_admin: adminRole?.is_admin || false,
+                        leads_count: leadCount || 0,
+                        name: profile?.name || null
+                    };
+                } catch (error) {
+                    console.error(`Error processing user ${user.id}:`, error);
+                    return {
+                        ...user,
+                        is_admin: false,
+                        leads_count: 0,
+                        name: null
+                    };
+                }
+            })
+        );
+
+        res.json({
+            users: usersWithData,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: count,
+                totalPages: Math.ceil(count / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Get users error:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
 // Toggle admin status for a user
-router.post('/toggle-admin/:userId', authMiddleware, checkAdminStatus, async (req, res) => {
+router.put('/users/:userId/admin-status', authMiddleware, checkAdminStatus, async (req, res) => {
     try {
         const { userId } = req.params;
         const { isAdmin } = req.body;
@@ -424,13 +453,15 @@ router.get('/leads/:leadId', authMiddleware, checkAdminStatus, async (req, res) 
 router.get('/campaigns', authMiddleware, checkAdminStatus, async (req, res) => {
     try {
         const { data, error } = await supabase
-            .rpc('get_campaigns');
+            .from('campaigns')
+            .select('*')
+            .order('created_at', { ascending: false });
 
         if (error) {
             return res.status(500).json({ error: 'Failed to fetch campaigns' });
         }
 
-        res.json({ campaigns: data });
+        res.json({ campaigns: data || [] });
     } catch (error) {
         console.error('Get campaigns error:', error);
         res.status(500).json({ error: 'Failed to get campaigns' });

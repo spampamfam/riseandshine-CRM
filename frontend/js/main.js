@@ -15,7 +15,7 @@ class CRMApp {
         try {
             // Add timeout to prevent hanging
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
             const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
                 credentials: 'include',
@@ -32,6 +32,10 @@ class CRMApp {
                 await this.checkAdminStatus();
                 
                 this.updateUIForAuthenticatedUser();
+            } else if (response.status === 401) {
+                // Clear any invalid cookies
+                document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                this.updateUIForUnauthenticatedUser();
             } else {
                 this.updateUIForUnauthenticatedUser();
             }

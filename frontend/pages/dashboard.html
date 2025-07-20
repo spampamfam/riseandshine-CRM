@@ -112,10 +112,13 @@
                 <!-- Statistics Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
+                        <div class="stat-number" id="totalLeads">0</div>
+                        <div class="stat-label">Total Leads</div>
+                    </div>
+                    <div class="stat-card">
                         <div class="stat-number" id="totalQualifiedThisMonth">0</div>
                         <div class="stat-label">Total Qualified Leads This Month</div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-number" id="qualifiedLeads">0</div>
                         <div class="stat-label">Qualified</div>
@@ -260,6 +263,15 @@
                         <select id="leadCampaign" name="campaign" class="form-input" required>
                             <option value="">Select Campaign</option>
                             <!-- Campaign options will be loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="leadListed" class="form-label">Listed *</label>
+                        <select id="leadListed" name="listed" class="form-input" required>
+                            <option value="">Select Listing Status</option>
+                            <option value="listed_with_realtor">Listed with Realtor</option>
+                            <option value="listed_by_owner">Listed by Owner</option>
+                            <option value="not_listed">Not Listed</option>
                         </select>
                     </div>
                 </div>
