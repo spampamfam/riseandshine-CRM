@@ -203,16 +203,31 @@ class Dashboard {
                 headers['Authorization'] = `Bearer ${localToken}`;
             }
 
-            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads?${params}`, {
+            // Use admin endpoint if user is admin
+            let url;
+            const isAdmin = window.crmApp?.currentUser?.isAdmin;
+            if (isAdmin) {
+                url = `https://riseandshine-crm-production.up.railway.app/api/admin/all-leads`;
+            } else {
+                url = `https://riseandshine-crm-production.up.railway.app/api/leads?${params}`;
+            }
+
+            const response = await fetch(isAdmin ? url : `${url}`, {
                 credentials: 'include',
                 headers
             });
             
             if (response.ok) {
                 const data = await response.json();
+                // For admin endpoint, data.leads is the array; for user endpoint, data.leads and data.pagination
                 this.leads = data.leads;
+                // Only render pagination for non-admins (since admin endpoint may not support it)
+                if (!isAdmin && data.pagination) {
+                    this.renderPagination(data.pagination);
+                } else {
+                    this.renderPagination({ page: 1, limit: this.leads.length, total: this.leads.length, totalPages: 1 });
+                }
                 this.renderLeadsTable();
-                this.renderPagination(data.pagination);
             }
         } catch (error) {
             console.error('Failed to load leads:', error);
