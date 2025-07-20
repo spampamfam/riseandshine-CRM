@@ -11,38 +11,6 @@ CREATE TABLE IF NOT EXISTS campaigns (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Update leads table with new fields
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20);
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns(id);
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS ap DECIMAL(12,2); -- Asking Price
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS mv DECIMAL(12,2); -- Market Value
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS repairs_needed TEXT;
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS bedrooms INTEGER;
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS bathrooms DECIMAL(3,1);
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS condition_rating INTEGER CHECK (condition_rating >= 1 AND condition_rating <= 10);
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS occupancy VARCHAR(20) CHECK (occupancy IN ('owner_occupied', 'tenants', 'vacant'));
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS reason TEXT;
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS closing VARCHAR(100);
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS address TEXT;
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS additional_info TEXT;
-
--- Update status column to use new status options
-ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_status_check;
-ALTER TABLE leads ADD CONSTRAINT leads_status_check 
-    CHECK (status IN ('new', 'contacted', 'qualified', 'disqualified', 'callback', 'inventory', 'converted'));
-
--- Create lead notes table
-CREATE TABLE IF NOT EXISTS lead_notes (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    note_text TEXT NOT NULL,
-    note_type VARCHAR(50) DEFAULT 'general', -- general, status_change, admin_note
-    is_admin_note BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
 -- Create form fields table for dynamic form management
 CREATE TABLE IF NOT EXISTS form_fields (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -81,6 +49,38 @@ CREATE TABLE IF NOT EXISTS section_fields (
     UNIQUE(section_id, field_id)
 );
 
+-- Update leads table with new fields
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns(id);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ap DECIMAL(12,2); -- Asking Price
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS mv DECIMAL(12,2); -- Market Value
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS repairs_needed TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS bedrooms INTEGER;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS bathrooms DECIMAL(3,1);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS condition_rating INTEGER CHECK (condition_rating >= 1 AND condition_rating <= 10);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS occupancy VARCHAR(20) CHECK (occupancy IN ('owner_occupied', 'tenants', 'vacant'));
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS reason TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS closing VARCHAR(100);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS additional_info TEXT;
+
+-- Update status column to use new status options
+ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_status_check;
+ALTER TABLE leads ADD CONSTRAINT leads_status_check 
+    CHECK (status IN ('new', 'contacted', 'qualified', 'disqualified', 'callback', 'inventory', 'converted'));
+
+-- Create lead notes table
+CREATE TABLE IF NOT EXISTS lead_notes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    note_text TEXT NOT NULL,
+    note_type VARCHAR(50) DEFAULT 'general', -- general, status_change, admin_note
+    is_admin_note BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Insert default form sections
 INSERT INTO form_sections (section_name, section_title, section_order) VALUES
 ('basic_info', 'Basic Information', 1),
@@ -110,7 +110,7 @@ INSERT INTO form_fields (field_name, field_type, field_label, field_placeholder,
 ('status', 'select', 'Status', 'Select lead status', false, 15, '["new","contacted","qualified","disqualified","callback","inventory","converted"]')
 ON CONFLICT (field_name) DO NOTHING;
 
--- Map fields to sections
+-- Map fields to sections (now that both tables exist)
 INSERT INTO section_fields (section_id, field_id, field_order, is_required) 
 SELECT 
     s.id as section_id,

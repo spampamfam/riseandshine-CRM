@@ -21,9 +21,16 @@ class Dashboard {
 
     async checkAuth() {
         try {
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
             const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
-                credentials: 'include'
+                credentials: 'include',
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (!response.ok) {
                 window.location.href = 'login.html';
@@ -40,6 +47,9 @@ class Dashboard {
             }
         } catch (error) {
             console.error('Auth check failed:', error);
+            if (error.name === 'AbortError') {
+                console.log('Auth check timed out, redirecting to login');
+            }
             window.location.href = 'login.html';
         }
     }

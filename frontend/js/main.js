@@ -13,15 +13,22 @@ class CRMApp {
 
     async checkAuth() {
         try {
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
             const response = await fetch(`${this.apiBaseUrl}/auth/me`, {
-                credentials: 'include'
+                credentials: 'include',
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
                 const data = await response.json();
                 this.currentUser = data.user;
                 
-                // Check admin status
+                // Check admin status with timeout
                 await this.checkAdminStatus();
                 
                 this.updateUIForAuthenticatedUser();
@@ -30,15 +37,25 @@ class CRMApp {
             }
         } catch (error) {
             console.error('Auth check failed:', error);
+            if (error.name === 'AbortError') {
+                console.log('Auth check timed out, showing guest UI');
+            }
             this.updateUIForUnauthenticatedUser();
         }
     }
 
     async checkAdminStatus() {
         try {
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
             const response = await fetch(`${this.apiBaseUrl}/admin/my-status`, {
-                credentials: 'include'
+                credentials: 'include',
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
                 const data = await response.json();
@@ -46,11 +63,17 @@ class CRMApp {
             }
         } catch (error) {
             console.error('Admin status check failed:', error);
+            if (error.name === 'AbortError') {
+                console.log('Admin check timed out, defaulting to non-admin');
+            }
             this.currentUser.isAdmin = false;
         }
     }
 
     updateUIForAuthenticatedUser() {
+        // Remove loading states
+        this.hideLoadingStates();
+        
         const authLinks = document.querySelectorAll('.auth-required');
         const guestLinks = document.querySelectorAll('.guest-only');
         const adminLinks = document.querySelectorAll('.admin-only');
@@ -73,6 +96,9 @@ class CRMApp {
     }
 
     updateUIForUnauthenticatedUser() {
+        // Remove loading states
+        this.hideLoadingStates();
+        
         const authLinks = document.querySelectorAll('.auth-required');
         const guestLinks = document.querySelectorAll('.guest-only');
         
@@ -80,8 +106,23 @@ class CRMApp {
         guestLinks.forEach(link => link.style.display = 'inline-block');
     }
 
+    hideLoadingStates() {
+        // Remove any loading indicators
+        const loadingElements = document.querySelectorAll('.loading, .spinner');
+        loadingElements.forEach(el => el.remove());
+    }
+
+
+
     async logout() {
         try {
+            // Show loading state
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.textContent = 'Logging out...';
+                logoutBtn.disabled = true;
+            }
+
             const response = await fetch(`${this.apiBaseUrl}/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
@@ -90,10 +131,22 @@ class CRMApp {
             if (response.ok) {
                 this.currentUser = null;
                 this.updateUIForUnauthenticatedUser();
-                window.location.href = '/';
+                
+                // Redirect to homepage (not /)
+                window.location.href = window.location.origin;
+            } else {
+                throw new Error('Logout failed');
             }
         } catch (error) {
             console.error('Logout failed:', error);
+            this.showNotification('Logout failed. Please try again.', 'error');
+            
+            // Reset button state
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.textContent = 'Logout';
+                logoutBtn.disabled = false;
+            }
         }
     }
 

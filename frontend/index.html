@@ -568,6 +568,15 @@
 
         // Initialize auth manager when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
+            // Add loading state
+            const authCard = document.querySelector('.auth-card');
+            if (authCard) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'loading-state';
+                loadingDiv.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Loading...</div>';
+                authCard.appendChild(loadingDiv);
+            }
+            
             window.authManager = new AuthManager();
         });
     </script>
