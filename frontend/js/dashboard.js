@@ -455,23 +455,25 @@ class Dashboard {
         const formData = new FormData(e.target);
         const leadId = formData.get('leadId');
         
-        // No validation required since all fields are optional
+        // Helper to convert empty string to null
+        const getOrNull = v => v === '' ? null : v;
+
         const leadData = {
-            name: formData.get('name') || null,
-            phoneNumber: formData.get('phoneNumber') || null,
-            campaign: formData.get('campaign') || null,
-            listed: formData.get('listed') || null,
-            ap: formData.get('ap') ? parseFloat(formData.get('ap')) : null,
-            mv: formData.get('mv') ? parseFloat(formData.get('mv')) : null,
-            repairsNeeded: formData.get('repairsNeeded') || null,
-            bedrooms: formData.get('bedrooms') || null,
-            bathrooms: formData.get('bathrooms') || null,
-            condition: formData.get('condition') ? parseInt(formData.get('condition')) : null,
-            occupancy: formData.get('occupancy') || null,
-            reason: formData.get('reason') || null,
-            closing: formData.get('closing') || null,
-            address: formData.get('address') || null,
-            additionalInfo: formData.get('additionalInfo') || null
+            name: getOrNull(formData.get('name')),
+            phoneNumber: getOrNull(formData.get('phoneNumber')),
+            campaign: getOrNull(formData.get('campaign')),
+            listed: getOrNull(formData.get('listed')),
+            ap: formData.get('ap') === '' ? null : parseFloat(formData.get('ap')),
+            mv: formData.get('mv') === '' ? null : parseFloat(formData.get('mv')),
+            repairsNeeded: getOrNull(formData.get('repairsNeeded')),
+            bedrooms: getOrNull(formData.get('bedrooms')),
+            bathrooms: getOrNull(formData.get('bathrooms')),
+            condition: getOrNull(formData.get('condition')),
+            occupancy: getOrNull(formData.get('occupancy')),
+            reason: getOrNull(formData.get('reason')),
+            closing: getOrNull(formData.get('closing')),
+            address: getOrNull(formData.get('address')),
+            additionalInfo: getOrNull(formData.get('additionalInfo'))
         };
 
         console.log('🔍 Lead data being sent:', leadData);
