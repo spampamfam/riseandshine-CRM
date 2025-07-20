@@ -88,7 +88,7 @@ After deploying the backend, you need to update the frontend to use the producti
 
 2. **Change from:**
    ```javascript
-   this.apiBaseUrl = 'http://localhost:3000/api';
+   this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
    ```
 
 3. **To:**
@@ -151,3 +151,111 @@ Once everything is working:
 - ✅ You can add and manage leads
 
 **Congratulations! Your CRM is now live on the internet!** 🚀✨ 
+
+## 🔍 **Check Current API URLs**
+
+Let's see what URLs are currently in your files:
+
+### **Step 1: Check main.js**
+```cmd
+findstr "localhost:3000" frontend/js/main.js
+```
+
+### **Step 2: Check login.html**
+```cmd
+findstr "localhost:3000" frontend/pages/login.html
+```
+
+### **Step 3: Check register.html**
+```cmd
+findstr "localhost:3000" frontend/pages/register.html
+```
+
+---
+
+## 🎯 **Manual Update (If Needed)**
+
+If the files still have localhost URLs, let's update them manually:
+
+### **File 1: `frontend/js/main.js`**
+Open the file and find this line:
+```javascript
+this.apiBaseUrl = 'http://localhost:3000/api';
+```
+
+Change it to:
+```javascript
+this.apiBaseUrl = 'https://riseandshine-crm-production.up.railway.app/api';
+```
+
+### **File 2: `frontend/pages/login.html`**
+Find this line:
+```javascript
+const response = await fetch('http://localhost:3000/api/auth/login', {
+```
+
+Change it to:
+```javascript
+const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/login', {
+```
+
+### **File 3: `frontend/pages/register.html`**
+Find this line:
+```javascript
+const response = await fetch('http://localhost:3000/api/auth/register', {
+```
+
+Change it to:
+```javascript
+const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/register', {
+```
+
+### **File 4: `frontend/js/dashboard.js`**
+Find this line:
+```javascript
+const response = await fetch('http://localhost:3000/api/auth/me', {
+```
+
+Change it to:
+```javascript
+const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
+```
+
+### **File 5: `frontend/js/admin.js`**
+Find this line:
+```javascript
+const response = await fetch('http://localhost:3000/api/auth/me', {
+```
+
+Change it to:
+```javascript
+const response = await fetch('https://riseandshine-crm-production.up.railway.app/api/auth/me', {
+```
+
+---
+
+## 🎯 **After Updating:**
+
+1. **Commit and push:**
+   ```cmd
+   git add .
+   git commit -m "Update API URLs for production"
+   git push
+   ```
+
+2. **Wait for Vercel to redeploy**
+
+3. **Update CORS in Railway:**
+   - Go to Railway dashboard
+   - Add environment variable: `CORS_ORIGIN=https://riseandshine-crm.vercel.app`
+
+---
+
+## 🎯 **Quick Check:**
+
+Can you run this command and tell me what it shows?
+```cmd
+findstr "localhost:3000" frontend\js\main.js
+```
+
+This will tell us if the files still have localhost URLs that need updating! 🚀 

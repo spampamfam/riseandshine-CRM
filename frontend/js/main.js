@@ -283,7 +283,7 @@ class FormValidator {
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.crmApp = new CRMApp();
-    window.api = new API('http://localhost:3000/api');
+    window.api = new API('https://riseandshine-crm-production.up.railway.app/api');
     
     // Initialize form validation for all forms
     document.querySelectorAll('form').forEach(form => {
