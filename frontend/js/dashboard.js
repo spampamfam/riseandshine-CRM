@@ -243,12 +243,28 @@ class Dashboard {
         const tbody = document.getElementById('leadsTableBody');
         if (!tbody) return;
 
+        const isAdmin = window.crmApp?.currentUser?.isAdmin;
+
+        // Update table header
+        const headerRow = document.querySelector('#leadsTable thead tr');
+        if (headerRow) {
+            headerRow.innerHTML = `
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Campaign</th>
+                <th>Status</th>
+                <th>Created</th>
+                ${isAdmin ? '<th>Submitted By</th>' : ''}
+                <th>Actions</th>
+            `;
+        }
+
         tbody.innerHTML = '';
 
         if (this.leads.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                    <td colspan="${isAdmin ? 7 : 6}" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                         No leads found. <button onclick="dashboard.openLeadModal()" class="btn btn-primary" style="margin-left: 0.5rem;">Add your first lead</button>
                     </td>
                 </tr>
@@ -261,9 +277,10 @@ class Dashboard {
             row.innerHTML = `
                 <td>${this.escapeHtml(lead.name)}</td>
                 <td>${this.escapeHtml(lead.phone_number || lead.contact || '-')}</td>
-                <td>${this.escapeHtml((lead.campaigns && lead.campaigns.name) || lead.campaign_name || '-') }</td>
+                <td>${this.escapeHtml(lead.campaign_name || (lead.campaigns && lead.campaigns.name) || '-')}</td>
                 <td><span class="status-badge status-${lead.status}">${lead.status}</span></td>
                 <td>${this.formatDate(lead.created_at)}</td>
+                ${isAdmin ? `<td>${this.escapeHtml(lead.user_email || '-')}</td>` : ''}
                 <td>
                     <button onclick="dashboard.editLead('${lead.id}')" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 0.5rem;">Edit</button>
                     <button onclick="dashboard.deleteLead('${lead.id}')" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
