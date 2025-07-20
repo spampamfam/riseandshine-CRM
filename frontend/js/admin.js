@@ -132,7 +132,7 @@ class AdminDashboard {
                 ...this.currentFilters
             });
 
-            const response = await fetch(`http://localhost:3000/api/admin/users?${params}`, {
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/admin/users?${params}`, {
                 credentials: 'include'
             });
             
@@ -220,7 +220,7 @@ class AdminDashboard {
 
     async viewUser(userId) {
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/users/${userId}`, {
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/admin/users/${userId}`, {
                 credentials: 'include'
             });
             
@@ -329,7 +329,7 @@ class AdminDashboard {
         if (!this.userToDelete) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/users/${this.userToDelete}`, {
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/admin/users/${this.userToDelete}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });

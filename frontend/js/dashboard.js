@@ -138,7 +138,7 @@ class Dashboard {
                 ...this.currentFilters
             });
 
-            const response = await fetch(`http://localhost:3000/api/leads?${params}`, {
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads?${params}`, {
                 credentials: 'include'
             });
             
@@ -272,8 +272,8 @@ class Dashboard {
 
         try {
             const url = leadId 
-                ? `http://localhost:3000/api/leads/${leadId}`
-                : 'http://localhost:3000/api/leads';
+                ? `https://riseandshine-crm-production.up.railway.app/api/leads/${leadId}`
+                : 'https://riseandshine-crm-production.up.railway.app/api/leads';
             
             const method = leadId ? 'PUT' : 'POST';
 
@@ -328,7 +328,7 @@ class Dashboard {
         if (!this.leadToDelete) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/leads/${this.leadToDelete}`, {
+            const response = await fetch(`https://riseandshine-crm-production.up.railway.app/api/leads/${this.leadToDelete}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
