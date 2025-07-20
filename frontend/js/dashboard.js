@@ -246,7 +246,7 @@ class Dashboard {
         const isAdmin = window.crmApp?.currentUser?.isAdmin;
 
         // Update table header
-        const headerRow = document.querySelector('#leadsTable thead tr');
+        const headerRow = document.getElementById('leadsTableHeader');
         if (headerRow) {
             headerRow.innerHTML = `
                 <th>Name</th>
